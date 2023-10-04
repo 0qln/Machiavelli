@@ -5,9 +5,11 @@
 #include <list>
 #include <algorithm>
 #include <cstdint>
+#include <vector>
 
 #include "Misc.hpp"
 #include "FenHelper.hpp"
+#include "Move.hpp"
 
 
 struct Board {
@@ -71,7 +73,7 @@ public:
 		}
 
 		// Set up pieces
-		int squareIdx = 0;
+		Square squareIdx = 0;
 		int fenIdx = parts[0];
 		for (; fenIdx < parts[1]; fenIdx++) {
 			/// skip slashes
@@ -157,16 +159,44 @@ public:
 		_move = stoi(str);
 	}
 
+
+	void GenerateMoves(Move* movelist) {
+		*movelist++ = Move(0);
+	}
+
+	// just assumes the move parameter is a legal one.
+	void MakeMove(Move* move) {
+		Square from = MoveHelper::GetFrom(move);
+		Square to = MoveHelper::GetTo(move);
+		auto flag = MoveHelper::GetFlag(move);
+		Piece movingP = PieceAt(&from);
+
+		if (flag == MoveHelper::CAPTURE_FLAG) {
+			// remove piece
+		}
+
+	}
+
+	// just assumes the move parameter is a legal one.
+	void UndoMove(Move* move) {
+	}
+
+
+	int Perft() {
+		
+	}
+
+
 	// receives for example 'e3'
 	int ToSquareIndex(std::string square) {
 		return SquareIndex(square.at(1), square.at(0) - 'b');
 	}
 
-	void FlipBit(Bitboard* board, int squareIdx) {
+	void FlipBit(Bitboard* board, Square squareIdx) {
 		*board |= (Bitboard(1) << squareIdx);
 	}
 
-	Piece PieceAt(int index) {
+	Piece PieceAt(Square* index) {
 		Bitboard sm = SquareMask(index);
 		int piece = Piece::None;
 
@@ -183,17 +213,17 @@ public:
 		return Piece(piece);
 	}
 
-	bool IsWhite(int index) {
+	bool IsWhite(Square* index) {
 		return (_whitePieces & SquareMask(index)) != 0;
 	}
 
-	bool IsBlack(int index) {
+	bool IsBlack(Square* index) {
 		return (_blackPieces & SquareMask(index)) != 0;
 	}
 
 
-	inline Bitboard SquareMask(int index) {
-		return Bitboard(1) << index;
+	inline Bitboard SquareMask(Square* index) {
+		return Bitboard(1) << *index;
 	}
 
 	/// <summary>
@@ -202,7 +232,7 @@ public:
 	/// <param name="row">1-indexed</param>
 	/// <param name="file">1-indexed</param>
 	/// <returns>0-indexed</returns>
-	int SquareIndex(int row, int file) {
+	Square SquareIndex(int row, int file) {
 		return file + 8 * (row-1) - 1;
 	}
 
@@ -212,12 +242,13 @@ public:
 
 
 		ss << "  _______________\n";
-		int squareIdx = 0;
+		Square squareIdx = 0;
 		for (int row = 1; row <= 8; row++) {
 			ss << row << " ";
 
 			for (int file = 1; file <= 8; file++) {
-				ss << PieceChars[PieceAt(squareIdx++)] << " ";
+				ss << PieceChars[PieceAt(&squareIdx)] << " ";
+				++squareIdx;
 			}
 
 			ss << "\n";

@@ -45,66 +45,93 @@ public:
 
 
 
-	static inline bool IsQuiteMove(Move move) {
-		return (move & FLAG_MASK) == QUITE_MOVE_MASK;
+	static inline bool IsQuiteMove(const Move* move) {
+		return (*move & FLAG_MASK) == QUITE_MOVE_MASK;
 	}
 
-	static inline bool IsDoublePawnPush(Move move) {
-		return (move & FLAG_MASK) == DOUBLE_PAWN_PUSH_MASK;
+	static inline bool IsDoublePawnPush(const Move* move) {
+		return (*move & FLAG_MASK) == DOUBLE_PAWN_PUSH_MASK;
 	}
 
-	static inline bool IsKingSideCastle(Move move) {
-		return (move & FLAG_MASK) == KING_CASTLE_MASK;
+	static inline bool IsCastle(const Move* move) {
+		return IsKingSideCastle(move)
+			|| IsQueenSideCastle(move);
 	}
-	static inline bool IsQueenSideCastle(Move move) {
-		return (move & FLAG_MASK) == QUEEN_CASTLE_MASK;
+	static inline bool IsKingSideCastle(const Move* move) {
+		return (*move & FLAG_MASK) == KING_CASTLE_MASK;
 	}
-
-	static inline bool IsCapture(Move move) {
-		return (move & FLAG_MASK) == CAPTURE_MASK;
-	}
-	static inline bool IsEnPassantCapture(Move move) {
-		return (move & FLAG_MASK) == EN_PASSANT_MASK;
+	static inline bool IsQueenSideCastle(const Move* move) {
+		return (*move & FLAG_MASK) == QUEEN_CASTLE_MASK;
 	}
 
-	static inline bool IsKnightPromotion(Move move) {
-		return (move & FLAG_MASK) == PROMOTION_KNIGHT_MASK;
+	static inline bool IsCapture(const Move* move) {
+		return IsOnlyCapture(move)
+			|| IsEnPassantCapture(move)
+			|| IsPromotionWithCapture(move);
 	}
-	static inline bool IsBishopPromotion(Move move) {
-		return (move & FLAG_MASK) == PROMOTION_BISHOP_MASK;
+	static inline bool IsOnlyCapture(const Move* move) {
+		return (*move & FLAG_MASK) == CAPTURE_MASK;
 	}
-	static inline bool IsRookPromotion(Move move) {
-		return (move & FLAG_MASK) == PROMOTION_ROOK_MASK;
-	}
-	static inline bool IsQueenPromotion(Move move) {
-		return (move & FLAG_MASK) == PROMOTION_QUEEN_MASK;
-	}
-
-	static inline bool IsKnightPromotionWithCapture(Move move) {
-		return (move & FLAG_MASK) == CAPTURE_PROMOTION_KNIGHT_MASK;
-	}
-	static inline bool IsBishopPromotionWithCapture(Move move) {
-		return (move & FLAG_MASK) == CAPTURE_PROMOTION_BISHOP_MASK;
-	}
-	static inline bool IsRookPromotionWithCapture(Move move) {
-		return (move & FLAG_MASK) == CAPTURE_PROMOTION_ROOK_MASK;
-	}
-	static inline bool IsQueenPromotionWithCapture(Move move) {
-		return (move & FLAG_MASK) == CAPTURE_PROMOTION_QUEEN_MASK;
+	static inline bool IsEnPassantCapture(const Move* move) {
+		return (*move & FLAG_MASK) == EN_PASSANT_MASK;
 	}
 
-	static Square GetTo(Move move) {
-		return (move & TO_MASK) >> TO_SHIFT;
-	}
-	static Square GetFrom(Move move) {
-		return (move & FROM_MASK) >> FROM_SHIFT;
-	}
-	static unsigned __int8 GetFlag(Move move) {
-		return (move & FLAG_MASK) >> FLAG_SHIFT;
+	static inline bool IsPromotion(const Move* move) {
+		return IsPromotionWithCapture(move)
+			|| IsPromotionWithoutCapture(move);
 	}
 
-	static Move Create(unsigned __int64 from, unsigned __int64 to, unsigned __int64 flags) {
-		return (flags << FLAG_SHIFT) | (to << TO_SHIFT) | (from << FROM_SHIFT);
+	static inline bool IsPromotionWithCapture(const Move* move) {
+		return IsKnightPromotionWithCapture(move)
+			|| IsBishopPromotionWithCapture(move)
+			|| IsRookPromotionWithCapture(move)
+			|| IsQueenPromotionWithCapture(move);
+	}
+	static inline bool IsKnightPromotionWithCapture(const Move* move) {
+		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_KNIGHT_MASK;
+	}
+	static inline bool IsBishopPromotionWithCapture(const Move* move) {
+		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_BISHOP_MASK;
+	}
+	static inline bool IsRookPromotionWithCapture(const Move* move) {
+		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_ROOK_MASK;
+	}
+	static inline bool IsQueenPromotionWithCapture(const Move* move) {
+		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_QUEEN_MASK;
+	}
+
+	static inline bool IsPromotionWithoutCapture(const Move* move) {
+		return IsKnightPromotion(move)
+			|| IsBishopPromotion(move)
+			|| IsRookPromotion(move)
+			|| IsQueenPromotion(move);
+	}
+	static inline bool IsKnightPromotion(const Move* move) {
+		return (*move & FLAG_MASK) == PROMOTION_KNIGHT_MASK;
+	}
+	static inline bool IsBishopPromotion(const Move* move) {
+		return (*move & FLAG_MASK) == PROMOTION_BISHOP_MASK;
+	}
+	static inline bool IsRookPromotion(const Move* move) {
+		return (*move & FLAG_MASK) == PROMOTION_ROOK_MASK;
+	}
+	static inline bool IsQueenPromotion(const Move* move) {
+		return (*move & FLAG_MASK) == PROMOTION_QUEEN_MASK;
+	}
+
+
+	static Square GetTo(const Move* move) {
+		return (*move & TO_MASK) >> TO_SHIFT;
+	}
+	static Square GetFrom(const Move* move) {
+		return (*move & FROM_MASK) >> FROM_SHIFT;
+	}
+	static unsigned __int8 GetFlag(const Move* move) {
+		return (*move & FLAG_MASK) >> FLAG_SHIFT;
+	}
+
+	static Move Create(Square from, Square to, unsigned __int64 flags) {
+		return (flags << FLAG_SHIFT) | (Bitboard(to) << TO_SHIFT) | (Bitboard(from) << FROM_SHIFT);
 	}
 
 
