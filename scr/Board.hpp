@@ -151,12 +151,6 @@ public:
 
 	// just assumes the move parameter is a legal one.
 	void MakeMove(const Move* move) {
-		const Square from = MoveHelper::GetFrom(move);
-		const Square to = MoveHelper::GetTo(move);
-		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
-		const Piece movingP = GetPiece(from);
-
-
 		// handle castling
 		if (MoveHelper::IsCastle(move)) {
 			// apply castling rules
@@ -165,19 +159,26 @@ public:
 			int rank = _turn ? /*white*/ 1 : /*black*/ 8;
 			if (MoveHelper::IsKingSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 7), MoveHelper::Flags::QUIET_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 4), Misc::SquareIndex(rank, 2), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUIET_MOVE_FLAG);
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUIET_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 4), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 4), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 5), MoveHelper::Flags::QUIET_MOVE_FLAG);
 			}
 			MakeMove(&kingMove);
 			MakeMove(&rookMove);
 
 			return;
 		}
+
+		
+		const Square from = MoveHelper::GetFrom(move);
+		const Square to = MoveHelper::GetTo(move);
+		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
+		const Piece movingP = GetPiece(from);
+
 		
 		// handle captures
 		if (MoveHelper::IsCapture(move)) {

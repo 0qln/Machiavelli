@@ -16,7 +16,7 @@ int main()
 	std::cout << int(Misc::ToSquareIndex("h8")) << " [56]" << "\n";
 
 
-	Move moves[6]; 
+	Move moves[8]; 
 	moves[0] = MoveHelper::Create("e2e4", MoveHelper::Flags::DOUBLE_PAWN_PUSH_FLAG);
 	moves[1] = MoveHelper::Create("e7e5", MoveHelper::Flags::DOUBLE_PAWN_PUSH_FLAG);
 
@@ -25,6 +25,10 @@ int main()
 
 	moves[4] = MoveHelper::Create("f1b5", MoveHelper::Flags::QUIET_MOVE_FLAG);
 	moves[5] = MoveHelper::Create("g8f6", MoveHelper::Flags::QUIET_MOVE_FLAG);
+
+	moves[6] = MoveHelper::Create("e1g1", MoveHelper::Flags::KING_CASTLE_FLAG);
+	moves[7] = MoveHelper::Create("d7d6", MoveHelper::Flags::QUIET_MOVE_FLAG);
+
 
 	for(Move move : moves)
 		b.MakeMove(&move);
