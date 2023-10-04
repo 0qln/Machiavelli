@@ -5,52 +5,76 @@
 class MoveHelper
 {
 public:
-	const static unsigned int FROM_SHIFT =		0;
-	const static unsigned int TO_SHIFT =		6;
-	const static unsigned int FLAG_SHIFT =	12;
+	using Flag = unsigned int;
+	using Shift = unsigned int;
+	using Mask = unsigned short;
 
-	const static Move FROM_MASK =	0b111111 << FROM_SHIFT;
-	const static Move TO_MASK =		0b111111 << TO_SHIFT;
-	const static Move FLAG_MASK =	0b1111 << FLAG_SHIFT;
+	enum Shifts : Shift {
+		FROM_SHIFT = 0,
+		TO_SHIFT = 6,
+		FLAG_SHIFT = 12
+	};
 
-	const static unsigned int QUITE_MOVE_FLAG =					0;
-	const static unsigned int DOUBLE_PAWN_PUSH_FLAG =			1;
-	const static unsigned int KING_CASTLE_FLAG =				2;
-	const static unsigned int QUEEN_CASTLE_FLAG =				3;
-	const static unsigned int CAPTURE_FLAG =					4;
-	const static unsigned int EN_PASSANT_FLAG =					5;
-	const static unsigned int PROMOTION_KNIGHT_FLAG =			8;
-	const static unsigned int PROMOTION_BISHOP_FLAG =			9;
-	const static unsigned int PROMOTION_ROOK_FLAG =				10;
-	const static unsigned int PROMOTION_QUEEN_FLAG =			11;
-	const static unsigned int CAPTURE_PROMOTION_KNIGHT_FLAG =	12;
-	const static unsigned int CAPTURE_PROMOTION_BISHOP_FLAG =	13;
-	const static unsigned int CAPTURE_PROMOTION_ROOK_FLAG =		14;
-	const static unsigned int CAPTURE_PROMOTION_QUEEN_FLAG =	15;
+	enum Masks : Mask {
+		FROM_MASK = 0b111111 << Shifts::FROM_SHIFT,
+		TO_MASK =	0b111111 << Shifts::TO_SHIFT,
+		FLAG_MASK = 0b1111 << Shifts::FLAG_SHIFT
+	};
 
-	const static Move QUITE_MOVE_MASK =						QUITE_MOVE_FLAG					<< FLAG_SHIFT;
-	const static Move DOUBLE_PAWN_PUSH_MASK =				DOUBLE_PAWN_PUSH_FLAG			<< FLAG_SHIFT;
-	const static Move KING_CASTLE_MASK =					KING_CASTLE_FLAG				<< FLAG_SHIFT;
-	const static Move QUEEN_CASTLE_MASK =					QUEEN_CASTLE_FLAG				<< FLAG_SHIFT;
-	const static Move CAPTURE_MASK =						CAPTURE_FLAG					<< FLAG_SHIFT;
-	const static Move EN_PASSANT_MASK =						EN_PASSANT_FLAG					<< FLAG_SHIFT;
-	const static Move PROMOTION_KNIGHT_MASK =				PROMOTION_KNIGHT_FLAG			<< FLAG_SHIFT;
-	const static Move PROMOTION_BISHOP_MASK =				PROMOTION_BISHOP_FLAG			<< FLAG_SHIFT;
-	const static Move PROMOTION_ROOK_MASK =					PROMOTION_ROOK_FLAG				<< FLAG_SHIFT;
-	const static Move PROMOTION_QUEEN_MASK =				PROMOTION_QUEEN_FLAG			<< FLAG_SHIFT;
-	const static Move CAPTURE_PROMOTION_KNIGHT_MASK =		CAPTURE_PROMOTION_KNIGHT_FLAG	<< FLAG_SHIFT;
-	const static Move CAPTURE_PROMOTION_BISHOP_MASK =		CAPTURE_PROMOTION_BISHOP_FLAG	<< FLAG_SHIFT;
-	const static Move CAPTURE_PROMOTION_ROOK_MASK =			CAPTURE_PROMOTION_ROOK_FLAG		<< FLAG_SHIFT;
-	const static Move CAPTURE_PROMOTION_QUEEN_MASK =		CAPTURE_PROMOTION_QUEEN_FLAG	<< FLAG_SHIFT;
+	enum Flags : Flag {
+		QUITE_MOVE_FLAG,
+		DOUBLE_PAWN_PUSH_FLAG,
+		KING_CASTLE_FLAG,
+		QUEEN_CASTLE_FLAG,
+		CAPTURE_FLAG,
+		EN_PASSANT_FLAG,
+		PROMOTION_KNIGHT_FLAG,
+		PROMOTION_BISHOP_FLAG,
+		PROMOTION_ROOK_FLAG,
+		PROMOTION_QUEEN_FLAG,
+		CAPTURE_PROMOTION_KNIGHT_FLAG,
+		CAPTURE_PROMOTION_BISHOP_FLAG,
+		CAPTURE_PROMOTION_ROOK_FLAG,
+		CAPTURE_PROMOTION_QUEEN_FLAG
+	};
+
+	enum FlagMasks : Mask {
+		QUITE_MOVE_MASK					= Flags::QUITE_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
+		DOUBLE_PAWN_PUSH_MASK			= Flags::DOUBLE_PAWN_PUSH_FLAG			<< Shifts::FLAG_SHIFT,
+		KING_CASTLE_MASK				= Flags::KING_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
+		QUEEN_CASTLE_MASK				= Flags::QUEEN_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
+		CAPTURE_MASK					= Flags::CAPTURE_FLAG					<< Shifts::FLAG_SHIFT,
+		EN_PASSANT_MASK					= Flags::EN_PASSANT_FLAG				<< Shifts::FLAG_SHIFT,
+		PROMOTION_KNIGHT_MASK			= Flags::PROMOTION_KNIGHT_FLAG			<< Shifts::FLAG_SHIFT,
+		PROMOTION_BISHOP_MASK			= Flags::PROMOTION_BISHOP_FLAG			<< Shifts::FLAG_SHIFT,
+		PROMOTION_ROOK_MASK				= Flags::PROMOTION_ROOK_FLAG			<< Shifts::FLAG_SHIFT,
+		PROMOTION_QUEEN_MASK			= Flags::PROMOTION_QUEEN_FLAG			<< Shifts::FLAG_SHIFT,
+		CAPTURE_PROMOTION_KNIGHT_MASK	= Flags::CAPTURE_PROMOTION_KNIGHT_FLAG	<< Shifts::FLAG_SHIFT,
+		CAPTURE_PROMOTION_BISHOP_MASK	= Flags::CAPTURE_PROMOTION_BISHOP_FLAG	<< Shifts::FLAG_SHIFT,
+		CAPTURE_PROMOTION_ROOK_MASK		= Flags::CAPTURE_PROMOTION_ROOK_FLAG	<< Shifts::FLAG_SHIFT,
+		CAPTURE_PROMOTION_QUEEN_MASK	= Flags::CAPTURE_PROMOTION_QUEEN_FLAG	<< Shifts::FLAG_SHIFT
+	};
 
 
 
-	static inline bool IsQuiteMove(const Move* move) {
-		return (*move & FLAG_MASK) == QUITE_MOVE_MASK;
+
+	//TODO: maybe cache the results? and let the current
+	//		move being evaluated be stored in a global field
+	//		that can has to be set before evaluating
+	// 
+	//		ex: 
+	//		MoveHelper::EvaluateMove = &myMove;
+	//		bool isquiet = EvaluateMove::IsQuiet();
+	// 
+	//		would have to perform a pert to
+	//		see wether it's worth
+
+	static inline bool IsQuietMove(const Move* move) {
+		return (*move & Masks::FLAG_MASK) == FlagMasks::QUITE_MOVE_MASK;
 	}
 
 	static inline bool IsDoublePawnPush(const Move* move) {
-		return (*move & FLAG_MASK) == DOUBLE_PAWN_PUSH_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::DOUBLE_PAWN_PUSH_MASK;
 	}
 
 	static inline bool IsCastle(const Move* move) {
@@ -58,10 +82,10 @@ public:
 			|| IsQueenSideCastle(move);
 	}
 	static inline bool IsKingSideCastle(const Move* move) {
-		return (*move & FLAG_MASK) == KING_CASTLE_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::KING_CASTLE_MASK;
 	}
 	static inline bool IsQueenSideCastle(const Move* move) {
-		return (*move & FLAG_MASK) == QUEEN_CASTLE_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::QUEEN_CASTLE_MASK;
 	}
 
 	static inline bool IsCapture(const Move* move) {
@@ -70,10 +94,10 @@ public:
 			|| IsPromotionWithCapture(move);
 	}
 	static inline bool IsOnlyCapture(const Move* move) {
-		return (*move & FLAG_MASK) == CAPTURE_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::CAPTURE_MASK;
 	}
 	static inline bool IsEnPassantCapture(const Move* move) {
-		return (*move & FLAG_MASK) == EN_PASSANT_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::EN_PASSANT_MASK;
 	}
 
 	static inline bool IsPromotion(const Move* move) {
@@ -88,16 +112,16 @@ public:
 			|| IsQueenPromotionWithCapture(move);
 	}
 	static inline bool IsKnightPromotionWithCapture(const Move* move) {
-		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_KNIGHT_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::CAPTURE_PROMOTION_KNIGHT_MASK;
 	}
 	static inline bool IsBishopPromotionWithCapture(const Move* move) {
-		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_BISHOP_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::CAPTURE_PROMOTION_BISHOP_MASK;
 	}
 	static inline bool IsRookPromotionWithCapture(const Move* move) {
-		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_ROOK_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::CAPTURE_PROMOTION_ROOK_MASK;
 	}
 	static inline bool IsQueenPromotionWithCapture(const Move* move) {
-		return (*move & FLAG_MASK) == CAPTURE_PROMOTION_QUEEN_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::CAPTURE_PROMOTION_QUEEN_MASK;
 	}
 
 	static inline bool IsPromotionWithoutCapture(const Move* move) {
@@ -107,31 +131,40 @@ public:
 			|| IsQueenPromotion(move);
 	}
 	static inline bool IsKnightPromotion(const Move* move) {
-		return (*move & FLAG_MASK) == PROMOTION_KNIGHT_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::PROMOTION_KNIGHT_MASK;
 	}
 	static inline bool IsBishopPromotion(const Move* move) {
-		return (*move & FLAG_MASK) == PROMOTION_BISHOP_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::PROMOTION_BISHOP_MASK;
 	}
 	static inline bool IsRookPromotion(const Move* move) {
-		return (*move & FLAG_MASK) == PROMOTION_ROOK_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::PROMOTION_ROOK_MASK;
 	}
 	static inline bool IsQueenPromotion(const Move* move) {
-		return (*move & FLAG_MASK) == PROMOTION_QUEEN_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::PROMOTION_QUEEN_MASK;
 	}
 
 
 	static Square GetTo(const Move* move) {
-		return (*move & TO_MASK) >> TO_SHIFT;
+		return (*move & Masks::TO_MASK) >> Shifts::TO_SHIFT;
 	}
 	static Square GetFrom(const Move* move) {
-		return (*move & FROM_MASK) >> FROM_SHIFT;
+		return (*move & Masks::FROM_MASK) >> Shifts::FROM_SHIFT;
 	}
-	static unsigned __int8 GetFlag(const Move* move) {
-		return (*move & FLAG_MASK) >> FLAG_SHIFT;
+	static Flag GetFlag(const Move* move) {
+		return (*move & Masks::FLAG_MASK) >> Shifts::FLAG_SHIFT;
 	}
 
-	static Move Create(Square from, Square to, unsigned __int64 flags) {
-		return (flags << FLAG_SHIFT) | (Bitboard(to) << TO_SHIFT) | (Bitboard(from) << FROM_SHIFT);
+	static Move Create(const Square from, const Square to, const Flag flag) {
+		return (Bitboard(flag) << Shifts::FLAG_SHIFT) | (Bitboard(to) << Shifts::TO_SHIFT) | (Bitboard(from) << Shifts::FROM_SHIFT);
+	}
+
+	// input ex: "e2e4"
+	static Move Create(const std::string str) {
+		auto from = str.substr(0, 2);
+		auto to = str.substr(2, 2);
+		Square fromSqr = Misc::ToSquareIndex(&from);
+		Square toSqr = Misc::ToSquareIndex(&to);
+		return Create(fromSqr, toSqr, Flags::QUITE_MOVE_FLAG);
 	}
 
 

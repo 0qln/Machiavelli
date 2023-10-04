@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+
+
 using Bitboard = unsigned __int64;
 
 
@@ -12,8 +15,8 @@ enum Depth {
 using Score = __int32;
 
 
-enum Piece : int {
 
+enum Piece : int {
 	None =			0b00000,
 
 	TypeMask =		0b11100,
@@ -42,7 +45,6 @@ enum Piece : int {
 	WhiteRook =		0b10010,
 	WhiteQueen =	0b10110,
 	WhiteKing =		0b11010,
-
 };
 
 
@@ -50,3 +52,32 @@ using Move = unsigned __int16;
 
 
 using Square = unsigned __int8;
+
+
+class Misc {
+public:
+
+
+
+	/// <summary>
+	/// receives for example 'e3'
+	/// </summary>
+	/// <param name="square"></param>
+	/// <returns></returns>
+	static inline Square ToSquareIndex(const std::string* square) {
+		int file = (*square).at(0) - 'b';
+		int rank = (*square).at(1) - '0';
+		return SquareIndex(rank, file);
+	}
+
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="row">1-indexed</param>
+	/// <param name="file">1-indexed</param>
+	/// <returns>0-indexed</returns>
+	static inline Square SquareIndex(const int rank, const int file) {
+		return file + 8 * (rank - 1) - 1;
+	}
+};

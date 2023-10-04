@@ -57,6 +57,7 @@ private:
 
 
 public:
+	const static Piece nullPiece = Piece(0);
 
 	Board() { }
 
@@ -73,9 +74,8 @@ public:
 		}
 
 		// Set up pieces
-		Square squareIdx = 0;
-		int fenIdx = parts[0];
-		for (; fenIdx < parts[1]; fenIdx++) {
+		Square squareIdx = 63;
+		for (int fenIdx = parts[0]; fenIdx < parts[1]; fenIdx++) {
 			/// skip slashes
 			if (fen.at(fenIdx) == '/') {
 				continue;
@@ -83,7 +83,7 @@ public:
 
 			/// handle digit
 			if (isdigit(fen.at(fenIdx))) {	
-				squareIdx += (fen.at(fenIdx) - '0');
+				squareIdx -= (fen.at(fenIdx) - '0');
 				continue;
 			}
 
@@ -98,27 +98,11 @@ public:
 
 
 			/// evaluate
-			if ((p & Piece::TypeMask) == Piece::Pawn) 
-				FlipBit(&_pawns, squareIdx);
-			if ((p & Piece::TypeMask) == Piece::Knight) 
-				FlipBit(&_knights, squareIdx);
-			if ((p & Piece::TypeMask) == Piece::Bishop) 
-				FlipBit(&_bishops, squareIdx);
-			if ((p & Piece::TypeMask) == Piece::Rook) 
-				FlipBit(&_rooks, squareIdx);
-			if ((p & Piece::TypeMask) == Piece::Queen) 
-				FlipBit(&_queens, squareIdx);
-			if ((p & Piece::TypeMask) == Piece::King) 
-				FlipBit(&_kings, squareIdx);
+			SetPiece(&squareIdx, &p);
 					
-			if ((p & Piece::ColorMask) == Piece::White) 
-				FlipBit(&_whitePieces, squareIdx);
-			if ((p & Piece::ColorMask) == Piece::Black) 
-				FlipBit(&_blackPieces, squareIdx);
-					
-			squareIdx++;
+
+			squareIdx--;
 		}
-		
 		// turn
 		str = fen.substr(parts[1], parts[2] - parts[1]);
 		if (str.find('w') != std::string::npos) {
@@ -145,8 +129,9 @@ public:
 
 		// en passant
 		str = fen.substr(parts[3], parts[4] - parts[3]);
-		if (str.find('-') != std::string::npos) {
-			FlipBit(&_enPassant, ToSquareIndex(str));
+		if (str.find('-') == std::string::npos) {
+			Square idx = Misc::ToSquareIndex(&str);
+			ActivateBit(&_enPassant, &idx);
 		}
 
 
@@ -161,42 +146,162 @@ public:
 
 
 	void GenerateMoves(Move* movelist) {
-		*movelist++ = Move(0);
+
 	}
 
 	// just assumes the move parameter is a legal one.
-	void MakeMove(Move* move) {
-		Square from = MoveHelper::GetFrom(move);
-		Square to = MoveHelper::GetTo(move);
-		auto flag = MoveHelper::GetFlag(move);
-		Piece movingP = PieceAt(&from);
+	void MakeMove(const Move* move) {
+		const Square from = MoveHelper::GetFrom(move);
+		const Square to = MoveHelper::GetTo(move);
+		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
+		const Piece movingP = GetPiece(&from);
 
-		if (flag == MoveHelper::CAPTURE_FLAG) {
-			// remove piece
+
+		// handle castling
+		if (MoveHelper::IsCastle(move)) {
+			// apply castling rules
+			Move kingMove;
+			Move rookMove;
+			int rank = _turn ? /*white*/ 1 : /*black*/ 8;
+			if (MoveHelper::IsKingSideCastle(move)) {
+				// init moves
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 7), MoveHelper::Flags::QUITE_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUITE_MOVE_FLAG);
+			}
+			if (MoveHelper::IsQueenSideCastle(move)) {
+				// init moves
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUITE_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 4), MoveHelper::Flags::QUITE_MOVE_FLAG);
+			}
+			MakeMove(&kingMove);
+			MakeMove(&rookMove);
+
+			return;
+		}
+		
+		// handle captures
+		if (MoveHelper::IsCapture(move)) {
+			if (MoveHelper::IsEnPassantCapture(move)) {
+				int removeRank = 3 + _turn;  //0-indexed
+				int removeFile = to % 8;	 //0-indexed
+				Square removeIdx = removeFile + 8 * removeRank;
+
+				// remove piece with offset...
+				SetPiece(&removeIdx, &nullPiece);
+
+				// remove possible en passant capture
+				_enPassant = 0;
+			}
+			else {
+				// remove piece at `to` Square
+				SetPiece(&to, &nullPiece);
+			}
 		}
 
+		
+		// handle promotion
+		Piece newP;
+		if (MoveHelper::IsPromotion(move)) {
+			int type = MoveHelper::IsPromotionWithCapture(move) ? flag * 4 - 40 : flag * 4 - 24;
+			int color = movingP & Piece::ColorMask;
+			newP = Piece((type << 2) | color);
+		}
+		else {
+			newP = movingP;
+		}
+
+
+		// move the piece
+		SetPiece(&to, &newP);
+		SetPiece(&from, &nullPiece);
+
+
+		if (MoveHelper::IsDoublePawnPush(move)) {
+			// remember as a possible en passant capture
+			// ex: 
+			//		e4 (-remember e3)
+			//		e5 (-remember e6)
+			
+			int rank = 2 + !_turn * 3;  //0-indexed
+			int file = to % 8;			//0-indexed
+			Square sq = file + rank * 8;
+			ActivateBit(&_enPassant, &sq);
+		}
+
+		// change turn
+		_turn = !_turn;
 	}
 
 	// just assumes the move parameter is a legal one.
-	void UndoMove(Move* move) {
+	void UndoMove(const Move* move) {
+	
 	}
 
 
-	int Perft() {
+	int Perft() const {
 		
 	}
 
-
-	// receives for example 'e3'
-	int ToSquareIndex(std::string square) {
-		return SquareIndex(square.at(1), square.at(0) - 'b');
+	inline void DeactivateBit(Bitboard* board, const Square* squareIdx) {
+		/*ActivateBit(board, squareIdx);
+		FlipBit(board, squareIdx);*/
+		SetBit(board, squareIdx, 0);
+	}
+	inline void ActivateBit(Bitboard* board, const Square* squareIdx) {
+		*board |= (Bitboard(1) << *squareIdx);
+	}
+	inline void FlipBit(Bitboard* board, const Square* squareIdx) {
+		*board ^= (Bitboard(1) << *squareIdx);
+	}
+	inline void SetBit(Bitboard* board, const Square* squareIdx, bool value) {
+		//*board |= (Bitboard(1) << *squareIdx); // default to an active bit
+		//*board ^= (Bitboard(!value) << *squareIdx); // flip the bit if needed
+		*board = (*board | (Bitboard(1) << *squareIdx)) ^ (Bitboard(!value) << *squareIdx);
 	}
 
-	void FlipBit(Bitboard* board, Square squareIdx) {
-		*board |= (Bitboard(1) << squareIdx);
+	void SetPiece(const Square* squareIdx, const Piece* p) {
+		
+		if ((*p & Piece::TypeMask) == Piece::Pawn)
+			 ActivateBit(&_pawns, squareIdx);
+		else DeactivateBit(&_pawns, squareIdx);
+
+		
+		if ((*p & Piece::TypeMask) == Piece::Knight)
+			 ActivateBit(&_knights, squareIdx);
+		else DeactivateBit(&_knights, squareIdx);
+
+
+		if ((*p & Piece::TypeMask) == Piece::Bishop)
+		 	 ActivateBit(&_bishops, squareIdx);
+		else DeactivateBit(&_bishops, squareIdx);
+
+
+		if ((*p & Piece::TypeMask) == Piece::Rook)
+			 ActivateBit(&_rooks, squareIdx);
+		else DeactivateBit(&_rooks, squareIdx);
+
+
+		if ((*p & Piece::TypeMask) == Piece::Queen)
+			 ActivateBit(&_queens, squareIdx);
+		else DeactivateBit(&_queens, squareIdx);
+
+
+		if ((*p & Piece::TypeMask) == Piece::King)
+			 ActivateBit(&_kings, squareIdx);
+		else DeactivateBit(&_kings, squareIdx);
+
+
+		if ((*p & Piece::ColorMask) == Piece::White)
+			 ActivateBit(&_whitePieces, squareIdx);
+		else DeactivateBit(&_whitePieces, squareIdx);
+
+
+		if ((*p & Piece::ColorMask) == Piece::Black)
+			 ActivateBit(&_blackPieces, squareIdx);
+		else DeactivateBit(&_blackPieces, squareIdx);
 	}
 
-	Piece PieceAt(Square* index) {
+	Piece GetPiece(const Square* index) const {
 		Bitboard sm = SquareMask(index);
 		int piece = Piece::None;
 
@@ -213,28 +318,19 @@ public:
 		return Piece(piece);
 	}
 
-	bool IsWhite(Square* index) {
+	inline bool IsWhite(const Square* index) const {
 		return (_whitePieces & SquareMask(index)) != 0;
 	}
 
-	bool IsBlack(Square* index) {
+	inline bool IsBlack(const Square* index) const {
 		return (_blackPieces & SquareMask(index)) != 0;
 	}
 
 
-	inline Bitboard SquareMask(Square* index) {
+	inline Bitboard SquareMask(const Square* index) const {
 		return Bitboard(1) << *index;
 	}
 
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="row">1-indexed</param>
-	/// <param name="file">1-indexed</param>
-	/// <returns>0-indexed</returns>
-	Square SquareIndex(int row, int file) {
-		return file + 8 * (row-1) - 1;
-	}
 
 
 	std::string ToSring() {
@@ -243,11 +339,11 @@ public:
 
 		ss << "  _______________\n";
 		Square squareIdx = 0;
-		for (int row = 1; row <= 8; row++) {
-			ss << row << " ";
+		for (int rank = 1; rank <= 8; rank++) {
+			ss << rank << " ";
 
 			for (int file = 1; file <= 8; file++) {
-				ss << PieceChars[PieceAt(&squareIdx)] << " ";
+				ss << PieceChars[GetPiece(&squareIdx)] << " ";
 				++squareIdx;
 			}
 

@@ -9,11 +9,9 @@
 int main()
 {
 	Board b = Board::Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	Move move = MoveHelper::Create(0, 1, MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG);
+	Move e4 = MoveHelper::Create("e2e4");
 
-	std::cout << MoveHelper::IsBishopPromotionWithCapture(&move);
-	std::cout << MoveHelper::IsBishopPromotion(&move);
-	std::cout << MoveHelper::IsCapture(&move);
+	b.MakeMove(&e4);
 
 	std::cout << b.ToSring();
 }
