@@ -154,18 +154,17 @@ public:
 		// handle castling
 		if (MoveHelper::IsCastle(move)) {
 			// apply castling rules
-			Move kingMove;
-			Move rookMove;
-			int rank = _turn ? /*white*/ 1 : /*black*/ 8;
+			Move kingMove, rookMove;
+			int rank = !_turn * 56;
 			if (MoveHelper::IsKingSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 4), Misc::SquareIndex(rank, 2), MoveHelper::Flags::QUIET_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				kingMove = MoveHelper::Create(rank + 3, rank + 1, 0);
+				rookMove = MoveHelper::Create(rank    , rank + 2, 0);
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 4), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUIET_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 5), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				kingMove = MoveHelper::Create(rank + 3, rank + 5, 0);
+				rookMove = MoveHelper::Create(rank + 7, rank + 4, 0);
 			}
 			MakeMove(&kingMove);
 			MakeMove(&rookMove);
