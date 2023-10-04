@@ -6,6 +6,11 @@
 #include <algorithm>
 #include <cstdint>
 #include <vector>
+#include <array>
+#include <bit>
+#include <bitset>
+#include <cstdint>
+#include <iostream>
 
 #include "Misc.hpp"
 #include "FenHelper.hpp"
@@ -98,7 +103,7 @@ public:
 
 
 			/// evaluate
-			SetPiece(&squareIdx, &p);
+			if (p) SetPiece(&squareIdx, &p);
 					
 
 			squareIdx--;
@@ -146,7 +151,66 @@ public:
 
 
 	void GenerateMoves(Move* movelist) {
+		
 
+	}
+
+	void GenerateRookMoves(Move* movelist, Bitboard rooks) {
+
+	}
+
+	const Bitboard File[8] {
+		0x0101010101010101ULL << 0,
+		0x0101010101010101ULL << 1,
+		0x0101010101010101ULL << 2,
+		0x0101010101010101ULL << 3,
+		0x0101010101010101ULL << 4,
+		0x0101010101010101ULL << 5,
+		0x0101010101010101ULL << 6,
+		0x0101010101010101ULL << 7,
+	};
+	const Bitboard Rank[8]{
+		0b11111111ULL << 8 * 0,
+		0b11111111ULL << 8 * 1,
+		0b11111111ULL << 8 * 2,
+		0b11111111ULL << 8 * 3,
+		0b11111111ULL << 8 * 4,
+		0b11111111ULL << 8 * 5,
+		0b11111111ULL << 8 * 6,
+		0b11111111ULL << 8 * 7,
+	};
+
+	Bitboard RookAttacks(Bitboard rook) {
+		Square rookPos = std::countr_zero(rook);
+		Bitboard result = Rank[rookPos / 8] | File[rookPos % 8]; 
+		return result ^ rook;
+	}
+
+	Bitboard RookAttacks() {
+		Bitboard tRooks1 = _rooks;
+		Bitboard tRooks2 = _rooks;
+		while (true) {
+			PopLsb(&tRooks2);
+			if (!tRooks2) break;
+			PopLsb(&tRooks1);
+		}
+		return RookAttacks(tRooks1); 
+	}
+
+	Square PopLsb(Bitboard* board) {
+		Square lsb = std::countr_zero(*board);  
+		*board &= *board - 1;
+		return lsb; 
+	}
+
+	Square Msb(Bitboard* board) {
+		Square msb = std::countl_zero(*board); 
+		return msb;
+	}
+
+	// probably slow, should only be used for testing!
+	bool ValueAtSquare(Bitboard* board, Square index) {
+		return 1 & (*board >> index);
 	}
 
 	// just assumes the move parameter is a legal one.
@@ -156,13 +220,12 @@ public:
 			// apply castling rules
 			Move kingMove, rookMove;
 			int rank = !_turn * 56;
+			// init moves
 			if (MoveHelper::IsKingSideCastle(move)) {
-				// init moves
 				kingMove = MoveHelper::Create(rank + 3, rank + 1, 0);
 				rookMove = MoveHelper::Create(rank    , rank + 2, 0);
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
-				// init moves
 				kingMove = MoveHelper::Create(rank + 3, rank + 5, 0);
 				rookMove = MoveHelper::Create(rank + 7, rank + 4, 0);
 			}
@@ -243,24 +306,21 @@ public:
 	}
 
 	inline void DeactivateBit(Bitboard* board, const Square* squareIdx) {
-		/*ActivateBit(board, squareIdx);
-		FlipBit(board, squareIdx);*/
-		SetBit(board, squareIdx, 0);
+		*board &= ~(1ULL << *squareIdx);
 	}
 	inline void ActivateBit(Bitboard* board, const Square* squareIdx) {
-		*board |= (Bitboard(1) << *squareIdx);
+		*board |= (1ULL << *squareIdx);
 	}
 	inline void FlipBit(Bitboard* board, const Square* squareIdx) {
-		*board ^= (Bitboard(1) << *squareIdx);
+		*board ^= (1ULL << *squareIdx);
 	}
-	inline void SetBit(Bitboard* board, const Square* squareIdx, bool value) {
-		//*board |= (Bitboard(1) << *squareIdx); // default to an active bit
-		//*board ^= (Bitboard(!value) << *squareIdx); // flip the bit if needed
-		*board = (*board | (Bitboard(1) << *squareIdx)) ^ (Bitboard(!value) << *squareIdx);
+	inline void FlipBits(Bitboard* board, const Square* squareIdx1, const Square* squareIdx2) {
+		*board ^= (1ULL << *squareIdx1 | 1ULL << *squareIdx2);
 	}
 
+
 	void SetPiece(const Square* squareIdx, const Piece* p) {
-		
+
 		if ((*p & Piece::TypeMask) == Piece::Pawn)
 			 ActivateBit(&_pawns, squareIdx);
 		else DeactivateBit(&_pawns, squareIdx);
@@ -333,26 +393,32 @@ public:
 
 
 
-	std::string ToSring() {
+	std::string ToSring(Bitboard highlightSquares) {
 		std::stringstream ss;
 
 
-		ss << "  _______________\n";
-		Square squareIdx = 63;
+		ss << "   _______________\n";
 		for (int rank = 8; rank >= 1; rank--) {
-			ss << rank << " ";
+			ss << rank << "  ";
 
-			for (int file = 1; file <= 8; file++) {
-				ss << PieceChars[GetPiece(squareIdx--)] << " ";
+			for (int file = 8; file >= 1; file--) {
+				int idx = Misc::SquareIndex(rank, file);
+				auto p = GetPiece(idx);
+				char c = PieceChars[p]; 
+				if (c == PieceChars[Piece::None] &&
+					ValueAtSquare(&highlightSquares, idx)) {
+					c = 'x';
+				}
+
+				ss << c << " "; 
 			}
 
-			ss << "\n";
+			ss << "\n"; 
 		}
-		ss << "  " << "a b c d e f g h";
+		ss << "   " << "a b c d e f g h\n";
 
 
-		std::string ret = ss.str();
-		return ret;
+		return ss.str();
 	}
 };
 
