@@ -154,7 +154,7 @@ public:
 		const Square from = MoveHelper::GetFrom(move);
 		const Square to = MoveHelper::GetTo(move);
 		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
-		const Piece movingP = GetPiece(&from);
+		const Piece movingP = GetPiece(from);
 
 
 		// handle castling
@@ -301,8 +301,8 @@ public:
 		else DeactivateBit(&_blackPieces, squareIdx);
 	}
 
-	Piece GetPiece(const Square* index) const {
-		Bitboard sm = SquareMask(index);
+	Piece GetPiece(const Square index) const {
+		Bitboard sm = SquareMask(&index);
 		int piece = Piece::None;
 
 		if		((_pawns	& sm) != 0)	piece |= Piece::Pawn;
@@ -312,8 +312,8 @@ public:
 		else if ((_queens	& sm) != 0)	piece |= Piece::Queen;
 		else if ((_kings	& sm) != 0)	piece |= Piece::King;
 
-		if		(IsWhite(index)) piece |= Piece::White;
-		else if (IsBlack(index)) piece |= Piece::Black;
+		if		(IsWhite(&index)) piece |= Piece::White;
+		else if (IsBlack(&index)) piece |= Piece::Black;
 
 		return Piece(piece);
 	}
@@ -338,13 +338,12 @@ public:
 
 
 		ss << "  _______________\n";
-		Square squareIdx = 0;
+		Square squareIdx = 63;
 		for (int rank = 1; rank <= 8; rank++) {
 			ss << rank << " ";
 
 			for (int file = 1; file <= 8; file++) {
-				ss << PieceChars[GetPiece(&squareIdx)] << " ";
-				++squareIdx;
+				ss << PieceChars[GetPiece(squareIdx--)] << " ";
 			}
 
 			ss << "\n";
