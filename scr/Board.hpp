@@ -165,13 +165,13 @@ public:
 			int rank = _turn ? /*white*/ 1 : /*black*/ 8;
 			if (MoveHelper::IsKingSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 7), MoveHelper::Flags::QUITE_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUITE_MOVE_FLAG);
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 7), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 8), Misc::SquareIndex(rank, 6), MoveHelper::Flags::QUIET_MOVE_FLAG);
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
 				// init moves
-				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUITE_MOVE_FLAG);
-				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 4), MoveHelper::Flags::QUITE_MOVE_FLAG);
+				kingMove = MoveHelper::Create(Misc::SquareIndex(rank, 5), Misc::SquareIndex(rank, 3), MoveHelper::Flags::QUIET_MOVE_FLAG);
+				rookMove = MoveHelper::Create(Misc::SquareIndex(rank, 1), Misc::SquareIndex(rank, 4), MoveHelper::Flags::QUIET_MOVE_FLAG);
 			}
 			MakeMove(&kingMove);
 			MakeMove(&rookMove);
@@ -212,8 +212,8 @@ public:
 
 
 		// move the piece
-		SetPiece(&to, &newP);
 		SetPiece(&from, &nullPiece);
+		SetPiece(&to, &newP);
 
 
 		if (MoveHelper::IsDoublePawnPush(move)) {
@@ -339,7 +339,7 @@ public:
 
 		ss << "  _______________\n";
 		Square squareIdx = 63;
-		for (int rank = 1; rank <= 8; rank++) {
+		for (int rank = 8; rank >= 1; rank--) {
 			ss << rank << " ";
 
 			for (int file = 1; file <= 8; file++) {

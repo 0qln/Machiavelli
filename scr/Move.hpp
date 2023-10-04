@@ -22,7 +22,7 @@ public:
 	};
 
 	enum Flags : Flag {
-		QUITE_MOVE_FLAG,
+		QUIET_MOVE_FLAG,
 		DOUBLE_PAWN_PUSH_FLAG,
 		KING_CASTLE_FLAG,
 		QUEEN_CASTLE_FLAG,
@@ -39,7 +39,7 @@ public:
 	};
 
 	enum FlagMasks : Mask {
-		QUITE_MOVE_MASK					= Flags::QUITE_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
+		QUITE_MOVE_MASK					= Flags::QUIET_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
 		DOUBLE_PAWN_PUSH_MASK			= Flags::DOUBLE_PAWN_PUSH_FLAG			<< Shifts::FLAG_SHIFT,
 		KING_CASTLE_MASK				= Flags::KING_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
 		QUEEN_CASTLE_MASK				= Flags::QUEEN_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
@@ -159,12 +159,12 @@ public:
 	}
 
 	// input ex: "e2e4"
-	static Move Create(const std::string str) {
+	static Move Create(const std::string str, const Flag flag) {
 		auto from = str.substr(0, 2);
 		auto to = str.substr(2, 2);
 		Square fromSqr = Misc::ToSquareIndex(&from);
 		Square toSqr = Misc::ToSquareIndex(&to);
-		return Create(fromSqr, toSqr, Flags::QUITE_MOVE_FLAG);
+		return Create(fromSqr, toSqr, flag);
 	}
 
 

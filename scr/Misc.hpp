@@ -65,9 +65,12 @@ public:
 	/// <param name="square"></param>
 	/// <returns></returns>
 	static inline Square ToSquareIndex(const std::string* square) {
-		int file = (*square).at(0) - 'a';
-		int rank = (*square).at(1) - '0';
+		int file = 9 - ((*square).at(0) - ('a' - 1));  //1-indexed
+		int rank = (*square).at(1) - '0';			   //1-indexed
 		return SquareIndex(rank, file);
+	}
+	static inline Square ToSquareIndex(const std::string square) {
+		return ToSquareIndex(&square);
 	}
 
 
