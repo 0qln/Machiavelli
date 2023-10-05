@@ -11,29 +11,78 @@
 #include <bitset>
 #include <cstdint>
 #include <iostream>
+#include <assert.h>
 
 #include "Misc.hpp"
 #include "FenHelper.hpp"
 #include "Move.hpp"
 
 
-struct Board {
+
+class Board {
+
+private: 
+	class StaticBoard { 
+		friend class Board;
+
+	public: // public only for testing
+
+		Bitboard PseudoLegalQuiets[7][2][64]; // [piece][color][position] 
+
+
+		const Bitboard FileMask[8]{
+			0x0101010101010101ULL << 0,
+			0x0101010101010101ULL << 1,
+			0x0101010101010101ULL << 2,
+			0x0101010101010101ULL << 3,
+			0x0101010101010101ULL << 4,
+			0x0101010101010101ULL << 5,
+			0x0101010101010101ULL << 6,
+			0x0101010101010101ULL << 7,
+		};
+		const Bitboard RankMask[8]{
+			0b11111111ULL << 8 * 0,
+			0b11111111ULL << 8 * 1,
+			0b11111111ULL << 8 * 2,
+			0b11111111ULL << 8 * 3,
+			0b11111111ULL << 8 * 4,
+			0b11111111ULL << 8 * 5,
+			0b11111111ULL << 8 * 6,
+			0b11111111ULL << 8 * 7,
+		};
+
+		// constructor
+		StaticBoard() {
+
+			// pawns
+
+
+
+			for (File i = FileTable::A; i <= FileTable::H; i++)
+				PseudoLegalQuiets[0][Color::White][i + 16] = 0x10100ULL << i;
+			for (File i = FileTable::A; i <= FileTable::H; i++)
+				for (Rank j = 2; j < 7; j++)
+					PseudoLegalQuiets[0][Color::White][j * 8 + i] = 1ULL << 8 + j * 8 + i;
+		}
+	};
+
 
 private:
+
+
 
 	int _ply = 0;
 
 	int _move = 0;
 
-	bool _turn = true;
+	bool _turn = Color::White;
 
-	bool _whiteKingCasle = false;
-	bool _whiteQueenCasle = false;
-	bool _blackKingCasle = false;
-	bool _blackQueenCasle = false;
+	bool _kingCasle[2];
+	bool _queenCasle[2];
 
-	Bitboard _whitePieces = 0, _blackPieces = 0;
-	Bitboard _pawns = 0, _knights = 0, _bishops = 0, _rooks = 0, _queens = 0, _kings = 0;
+	Bitboard _checkers = 0, _pinners = 0;
+	Bitboard _pieceTypes[7]; 
+	Bitboard _pieceColors[2];
 	Bitboard _enPassant = 0;
 
 
@@ -43,7 +92,7 @@ private:
 	//	'♟', '♞', '♝', '♜', '♛', '♚', //black
 	//};
 	std::map<Piece, char> PieceChars = {
-		std::make_pair(Piece::None, '.'),
+		std::make_pair(Piece::P_NULL, '.'),
 
 		std::make_pair(Piece::WhitePawn,	'P'),
 		std::make_pair(Piece::WhiteKnight,	'N'),
@@ -62,9 +111,15 @@ private:
 
 
 public:
-	const static Piece nullPiece = Piece(0);
+	static StaticBoard Constants;
 
-	Board() { }
+
+	bool Turn() { return _turn; }
+
+
+	static inline void Flip(Bitboard* board) {
+		*board ^= 56;
+	}
 
 	Board(std::string fen) {
 		std::string str;
@@ -78,6 +133,7 @@ public:
 			parts[++partIdx] = spaceIdx;
 		}
 
+
 		// Set up pieces
 		Square squareIdx = 63;
 		for (int fenIdx = parts[0]; fenIdx < parts[1]; fenIdx++) {
@@ -88,12 +144,12 @@ public:
 
 			/// handle digit
 			if (isdigit(fen.at(fenIdx))) {	
-				squareIdx -= (fen.at(fenIdx) - '0');
+				squareIdx -= fen.at(fenIdx) - '0';
 				continue;
 			}
 
 			/// get piece char as Piece Type
-			Piece p = Piece::None;
+			Piece p = Piece::P_NULL;
 			for (auto& i : PieceChars) {
 				if (i.second == fen.at(fenIdx)) {
 					p = i.first;
@@ -101,36 +157,29 @@ public:
 				}
 			}
 
-
 			/// evaluate
-			if (p) SetPiece(&squareIdx, &p);
-					
+			int idx = squareIdx ^ 7;
+			SetPiece(idx, p);
 
 			squareIdx--;
 		}
+
 		// turn
 		str = fen.substr(parts[1], parts[2] - parts[1]);
 		if (str.find('w') != std::string::npos) {
-			_turn = true;
+			_turn = Color::White;
 		}
 		else {
-			_turn = false;
+			_turn = Color::Black;
 		}
 
 		// castling
 		str = fen.substr(parts[2], parts[3] - parts[2]);
-		if (str.find('K') != std::string::npos) {
-			_whiteKingCasle = true;
-		}
-		if (str.find('Q') != std::string::npos) {
-			_whiteQueenCasle = true;
-		}
-		if (str.find('k') != std::string::npos) {
-			_blackKingCasle = true;
-		}
-		if (str.find('q') != std::string::npos) {
-			_blackQueenCasle = true;
-		}
+		if (str.find('K') != std::string::npos) _kingCasle[Color::White] = true;
+		if (str.find('Q') != std::string::npos) _queenCasle[Color::White] = true;
+		if (str.find('k') != std::string::npos) _kingCasle[Color::Black] = true;
+		if (str.find('q') != std::string::npos) _queenCasle[Color::Black] = true;
+		
 
 		// en passant
 		str = fen.substr(parts[3], parts[4] - parts[3]);
@@ -144,6 +193,7 @@ public:
 		str = fen.substr(parts[4]+1, parts[5] - parts[4]);
 		_ply = stoi(str);
 
+
 		// move
 		str = fen.substr(parts[5]+1, fen.size() - parts[5]);
 		_move = stoi(str);
@@ -155,40 +205,20 @@ public:
 
 	}
 
+
 	void GenerateRookMoves(Move* movelist, Bitboard rooks) {
 
 	}
 
-	const Bitboard File[8] {
-		0x0101010101010101ULL << 0,
-		0x0101010101010101ULL << 1,
-		0x0101010101010101ULL << 2,
-		0x0101010101010101ULL << 3,
-		0x0101010101010101ULL << 4,
-		0x0101010101010101ULL << 5,
-		0x0101010101010101ULL << 6,
-		0x0101010101010101ULL << 7,
-	};
-	const Bitboard Rank[8]{
-		0b11111111ULL << 8 * 0,
-		0b11111111ULL << 8 * 1,
-		0b11111111ULL << 8 * 2,
-		0b11111111ULL << 8 * 3,
-		0b11111111ULL << 8 * 4,
-		0b11111111ULL << 8 * 5,
-		0b11111111ULL << 8 * 6,
-		0b11111111ULL << 8 * 7,
-	};
-
+	// expects a single piece (a single bit flipped to 1) 
 	Bitboard RookAttacks(Bitboard rook) {
-		Square rookPos = std::countr_zero(rook);
-		Bitboard result = Rank[rookPos / 8] | File[rookPos % 8]; 
-		return result ^ rook;
+
 	}
 
+	// Helper function for debugging
 	Bitboard RookAttacks() {
-		Bitboard tRooks1 = _rooks;
-		Bitboard tRooks2 = _rooks;
+		Bitboard tRooks1 = _pieceTypes[PieceType::Rook];
+		Bitboard tRooks2 = _pieceTypes[PieceType::Rook]; 
 		while (true) {
 			PopLsb(&tRooks2);
 			if (!tRooks2) break;
@@ -197,21 +227,19 @@ public:
 		return RookAttacks(tRooks1); 
 	}
 
+
+	inline Square Lsb(Bitboard* board) {
+		return *board ? std::countr_zero(*board) : 64;
+	}
 	Square PopLsb(Bitboard* board) {
-		Square lsb = std::countr_zero(*board);  
+		Square lsb = Lsb(board);
 		*board &= *board - 1;
 		return lsb; 
 	}
-
 	Square Msb(Bitboard* board) {
-		Square msb = std::countl_zero(*board); 
-		return msb;
+		return *board ? std::countl_zero(*board) : 0;
 	}
 
-	// probably slow, should only be used for testing!
-	bool ValueAtSquare(Bitboard* board, Square index) {
-		return 1 & (*board >> index);
-	}
 
 	// just assumes the move parameter is a legal one.
 	void MakeMove(const Move* move) {
@@ -219,16 +247,19 @@ public:
 		if (MoveHelper::IsCastle(move)) {
 			// apply castling rules
 			Move kingMove, rookMove;
-			int rank = !_turn * 56;
+			int rank = _turn == Color::White ? Rank(0) : Rank(7);
 			// init moves
 			if (MoveHelper::IsKingSideCastle(move)) {
-				kingMove = MoveHelper::Create(rank + 3, rank + 1, 0);
-				rookMove = MoveHelper::Create(rank    , rank + 2, 0);
+				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::G, MoveHelper::QUITE_MOVE_MASK);
+				rookMove = MoveHelper::Create(rank + FileTable::H, rank + FileTable::F, MoveHelper::QUITE_MOVE_MASK);
+				_kingCasle[_turn] = false;
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
-				kingMove = MoveHelper::Create(rank + 3, rank + 5, 0);
-				rookMove = MoveHelper::Create(rank + 7, rank + 4, 0);
+				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::C, MoveHelper::QUITE_MOVE_MASK);
+				rookMove = MoveHelper::Create(rank + FileTable::A, rank + FileTable::D, MoveHelper::QUITE_MOVE_MASK);
+				_queenCasle[_turn] = false;
 			}
+
 			MakeMove(&kingMove);
 			MakeMove(&rookMove);
 
@@ -241,23 +272,33 @@ public:
 		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
 		const Piece movingP = GetPiece(from);
 
-		
+
+		// castling rights
+		if (movingP >> 1 == PieceType::Rook && from == SquareTable::A1) _queenCasle[Color::White] = false;
+		if (movingP >> 1 == PieceType::Rook && from == SquareTable::H1) _kingCasle [Color::White] = false;
+		if (movingP >> 1 == PieceType::Rook && from == SquareTable::A8) _queenCasle[Color::Black] = false;
+		if (movingP >> 1 == PieceType::Rook && from == SquareTable::H8) _kingCasle [Color::Black] = false;
+		if (movingP >> 1 == PieceType::King) {
+			_queenCasle[_turn] = false;
+			_kingCasle [_turn] = false;
+		}
+
 		// handle captures
 		if (MoveHelper::IsCapture(move)) {
 			if (MoveHelper::IsEnPassantCapture(move)) {
-				int removeRank = 3 + _turn;  //0-indexed
-				int removeFile = to % 8;	 //0-indexed
+				int removeRank = 3 + !_turn;
+				int removeFile = to % 8;
 				Square removeIdx = removeFile + 8 * removeRank;
 
 				// remove piece with offset...
-				SetPiece(&removeIdx, &nullPiece);
+				SetPiece(removeIdx, Misc::NullPiece);
 
 				// remove possible en passant capture
 				_enPassant = 0;
 			}
 			else {
 				// remove piece at `to` Square
-				SetPiece(&to, &nullPiece);
+				SetPiece(to, Misc::NullPiece);
 			}
 		}
 
@@ -265,9 +306,9 @@ public:
 		// handle promotion
 		Piece newP;
 		if (MoveHelper::IsPromotion(move)) {
-			int type = MoveHelper::IsPromotionWithCapture(move) ? flag * 4 - 40 : flag * 4 - 24;
-			int color = movingP & Piece::ColorMask;
-			newP = Piece((type << 2) | color);
+			int type = MoveHelper::IsPromotionWithCapture(move) ? flag - 4 : flag;
+			int color = !_turn;
+			newP = Piece((type << 1) | color);
 		}
 		else {
 			newP = movingP;
@@ -275,8 +316,8 @@ public:
 
 
 		// move the piece
-		SetPiece(&from, &nullPiece);
-		SetPiece(&to, &newP);
+		SetPiece(from, Piece::P_NULL);
+		SetPiece(to, newP);
 
 
 		if (MoveHelper::IsDoublePawnPush(move)) {
@@ -305,6 +346,7 @@ public:
 		
 	}
 
+
 	inline void DeactivateBit(Bitboard* board, const Square* squareIdx) {
 		*board &= ~(1ULL << *squareIdx);
 	}
@@ -317,75 +359,56 @@ public:
 	inline void FlipBits(Bitboard* board, const Square* squareIdx1, const Square* squareIdx2) {
 		*board ^= (1ULL << *squareIdx1 | 1ULL << *squareIdx2);
 	}
+	inline bool GetBit(Bitboard board, const Square* squareIdx) {
+		return (board >> *squareIdx) & 1;
+	}
+	inline void SetBit(Bitboard* board, const Square* squareIdx, const bool value) {
+		*board = (*board & (1ULL << *squareIdx)) | *board << *squareIdx; 
+	}
 
 
-	void SetPiece(const Square* squareIdx, const Piece* p) {
+	void SetPiece(const Square squareIdx, const Piece p) {
 
-		if ((*p & Piece::TypeMask) == Piece::Pawn)
-			 ActivateBit(&_pawns, squareIdx);
-		else DeactivateBit(&_pawns, squareIdx);
-
-		
-		if ((*p & Piece::TypeMask) == Piece::Knight)
-			 ActivateBit(&_knights, squareIdx);
-		else DeactivateBit(&_knights, squareIdx);
+		for (Bitboard typeBoard : _pieceTypes) {
+			// each square can only be occupied by one piece type
+			DeactivateBit(&typeBoard, &squareIdx);
+		}
+		ActivateBit(&_pieceTypes[(p >> 1)], &squareIdx);
 
 
-		if ((*p & Piece::TypeMask) == Piece::Bishop)
-		 	 ActivateBit(&_bishops, squareIdx);
-		else DeactivateBit(&_bishops, squareIdx);
+		if ((p & Piece::ColorMask) == Color::White) 
+			 ActivateBit(&_pieceColors[Color::White], &squareIdx);
+		else DeactivateBit(&_pieceColors[Color::White], &squareIdx);
 
 
-		if ((*p & Piece::TypeMask) == Piece::Rook)
-			 ActivateBit(&_rooks, squareIdx);
-		else DeactivateBit(&_rooks, squareIdx);
-
-
-		if ((*p & Piece::TypeMask) == Piece::Queen)
-			 ActivateBit(&_queens, squareIdx);
-		else DeactivateBit(&_queens, squareIdx);
-
-
-		if ((*p & Piece::TypeMask) == Piece::King)
-			 ActivateBit(&_kings, squareIdx);
-		else DeactivateBit(&_kings, squareIdx);
-
-
-		if ((*p & Piece::ColorMask) == Piece::White)
-			 ActivateBit(&_whitePieces, squareIdx);
-		else DeactivateBit(&_whitePieces, squareIdx);
-
-
-		if ((*p & Piece::ColorMask) == Piece::Black)
-			 ActivateBit(&_blackPieces, squareIdx);
-		else DeactivateBit(&_blackPieces, squareIdx);
+		if ((p & Piece::ColorMask) == Color::Black)
+			 ActivateBit(&_pieceColors[Color::Black], &squareIdx);
+		else DeactivateBit(&_pieceColors[Color::Black], &squareIdx);
 	}
 
 	Piece GetPiece(const Square index) const {
 		Bitboard sm = SquareMask(&index);
-		int piece = Piece::None;
+		int piece = Piece::P_NULL;
 
-		if		((_pawns	& sm) != 0)	piece |= Piece::Pawn;
-		else if ((_knights	& sm) != 0)	piece |= Piece::Knight;
-		else if ((_bishops	& sm) != 0)	piece |= Piece::Bishop;
-		else if ((_rooks	& sm) != 0)	piece |= Piece::Rook;
-		else if ((_queens	& sm) != 0)	piece |= Piece::Queen;
-		else if ((_kings	& sm) != 0)	piece |= Piece::King;
+		for (int bi = PieceType::PT_NULL; bi <= PieceType::King; bi++) {
+			if ((_pieceTypes[bi] & sm) != 0) {
+				piece |= PieceType(bi) << 1;
+				break;
+			}
+		}
 
-		if		(IsWhite(&index)) piece |= Piece::White;
-		else if (IsBlack(&index)) piece |= Piece::Black;
+		piece |= IsBlack(&index);
 
 		return Piece(piece);
 	}
 
+
 	inline bool IsWhite(const Square* index) const {
-		return (_whitePieces & SquareMask(index)) != 0;
+		return (_pieceColors[Color::White] & SquareMask(index)) != 0;
 	}
-
 	inline bool IsBlack(const Square* index) const {
-		return (_blackPieces & SquareMask(index)) != 0;
+		return (_pieceColors[Color::Black] & SquareMask(index)) != 0;
 	}
-
 
 	inline Bitboard SquareMask(const Square* index) const {
 		return Bitboard(1) << *index;
@@ -398,15 +421,15 @@ public:
 
 
 		ss << "   _______________\n";
-		for (int rank = 8; rank >= 1; rank--) {
-			ss << rank << "  ";
+		for (Rank rank = 7; rank >= 0; rank--) {
+			ss << rank + 1 << "  ";
 
-			for (int file = 8; file >= 1; file--) {
-				int idx = Misc::SquareIndex(rank, file);
+			for (File file = FileTable::A; file <= FileTable::H; file++) {
+				int idx = Misc::SquareIndex_0IDX(rank, file);
 				auto p = GetPiece(idx);
 				char c = PieceChars[p]; 
-				if (c == PieceChars[Piece::None] &&
-					ValueAtSquare(&highlightSquares, idx)) {
+				if (c == PieceChars[Piece::P_NULL] &&
+					GetBit(highlightSquares, &idx)) {
 					c = 'x';
 				}
 
