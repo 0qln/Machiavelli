@@ -1,4 +1,7 @@
-﻿#include <iostream>
+﻿#pragma once
+
+
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <map>
@@ -14,10 +17,7 @@
 #include <assert.h>
 
 #include "Misc.hpp"
-#include "FenHelper.hpp"
 #include "Move.hpp"
-
-
 
 class Board {
 
@@ -64,6 +64,10 @@ private:
 
 
 public:
+
+	Bitboard GetColorBitboard(Color color) {
+		return _pieceColors[color];
+	}
 
 	Bitboard GetPieceBitboard(PieceType type) {
 		return _pieceTypes[type];
@@ -342,7 +346,7 @@ public:
 				int idx = Misc::SquareIndex_0IDX(rank, file);
 				auto p = GetPiece(idx);
 				char c = PieceChars[p]; 
-				if (c == PieceChars[Piece::P_NULL] &&
+				if (/*c == PieceChars[Piece::P_NULL] &&*/
 					GetBit(highlightSquares, &idx)) {
 					c = 'x';
 				}
