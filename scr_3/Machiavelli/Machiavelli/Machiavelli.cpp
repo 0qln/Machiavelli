@@ -23,14 +23,19 @@ int main()
 	//	}
 	//}
 
-	auto bishopPos = "d4"; 
-	Square bishopSquare = Misc::ToSquareIndex(bishopPos); 
+	auto pos = "h5"; 
+	Square square = Misc::ToSquareIndex(pos); 
+	b.SetPiece(square, WhitePawn);
 
-	b.SetPiece(bishopSquare, Piece::WhiteBishop);
-	b.SetPiece(Misc::ToSquareIndex("c3"), Piece::WhitePawn);
-	b.SetPiece(Misc::ToSquareIndex("a1"), Piece::WhitePawn);
 
-	Bitboard moves = generator.GenerateWhiteBishopMoves(bishopSquare);
+	Move move;
+	b.SetPiece(Misc::ToSquareIndex("e7"), BlackPawn);
+	b.SetTurn(Color::Black);
+	move = MoveHelper::Create("e7e5", MoveHelper::DOUBLE_PAWN_PUSH_FLAG);
+	b.MakeMove(&move);
+
+
+	Bitboard moves = generator.GenerateWhitePawnMoves(square);
 	std::cout << b.ToSring(moves);
 
 	return EXIT_SUCCESS;

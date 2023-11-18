@@ -28,7 +28,7 @@ private:
 
 	int _move = 0;
 
-	bool _turn = Color::White;
+	Color _turn = Color::White;
 
 	bool _kingCasle[2];
 	bool _queenCasle[2];
@@ -73,7 +73,17 @@ public:
 		return _pieceTypes[type];
 	}
 
-	bool Turn() { return _turn; }
+	Bitboard GetEnPassant() {
+		return _enPassant;
+	}
+
+	void SetTurn(Color turn) {
+		_turn = turn;
+	}
+
+	Color GetTurn() { 
+		return _turn; 
+	}
 
 
 	static inline void Flip(Bitboard* board) {
@@ -164,22 +174,24 @@ public:
 
 
 	// just assumes the move parameter is a legal one.
-	void MakeMove(const Move* move) {
+	void MakeMove(const Move* move, bool changeTurn = true) {
+		Color us = _turn;
+
 		// handle castling
 		if (MoveHelper::IsCastle(move)) {
 			// apply castling rules
 			Move kingMove, rookMove;
-			int rank = _turn == Color::White ? Rank(0) : Rank(7);
+			int rank = us == Color::White ? Rank(0) : Rank(7);
 			// init moves
 			if (MoveHelper::IsKingSideCastle(move)) {
 				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::G, MoveHelper::QUITE_MOVE_MASK);
 				rookMove = MoveHelper::Create(rank + FileTable::H, rank + FileTable::F, MoveHelper::QUITE_MOVE_MASK);
-				_kingCasle[_turn] = false;
+				_kingCasle[us] = false;
 			}
 			if (MoveHelper::IsQueenSideCastle(move)) {
 				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::C, MoveHelper::QUITE_MOVE_MASK);
 				rookMove = MoveHelper::Create(rank + FileTable::A, rank + FileTable::D, MoveHelper::QUITE_MOVE_MASK);
-				_queenCasle[_turn] = false;
+				_queenCasle[us] = false;
 			}
 
 			MakeMove(&kingMove);
@@ -201,14 +213,14 @@ public:
 		if (movingP >> 1 == PieceType::Rook && from == SquareTable::A8) _queenCasle[Color::Black] = false;
 		if (movingP >> 1 == PieceType::Rook && from == SquareTable::H8) _kingCasle [Color::Black] = false;
 		if (movingP >> 1 == PieceType::King) {
-			_queenCasle[_turn] = false;
-			_kingCasle [_turn] = false;
+			_queenCasle[us] = false;
+			_kingCasle [us] = false;
 		}
 
 		// handle captures
 		if (MoveHelper::IsCapture(move)) {
 			if (MoveHelper::IsEnPassantCapture(move)) {
-				int removeRank = 3 + !_turn;
+				int removeRank = 3 + !us;
 				int removeFile = to % 8;
 				Square removeIdx = removeFile + 8 * removeRank;
 
@@ -229,7 +241,7 @@ public:
 		Piece newP;
 		if (MoveHelper::IsPromotion(move)) {
 			int type = MoveHelper::IsPromotionWithCapture(move) ? flag - 4 : flag;
-			int color = !_turn;
+			int color = !us;
 			newP = Piece((type << 1) | color);
 		}
 		else {
@@ -248,14 +260,16 @@ public:
 			//		e4 (-remember e3)
 			//		e5 (-remember e6)
 			
-			int rank = 2 + !_turn * 3;  //0-indexed
-			int file = to % 8;			//0-indexed
+			int rank = 2 + +us * 3; //0-indexed
+			int file = to % 8;		//0-indexed
 			Square sq = file + rank * 8;
 			ActivateBit(&_enPassant, &sq);
 		}
 
 		// change turn
-		_turn = !_turn;
+		if (changeTurn) {
+			_turn = Color(!_turn);
+		}
 	}
 
 	// just assumes the move parameter is a legal one.
@@ -292,9 +306,9 @@ public:
 	}
 
 	void SetPiece(const Square squareIdx, const Piece p) {
-
 		for (Bitboard typeBoard : _pieceTypes) {
-			// each square can only be occupied by one piece type
+			// each square can only be occupied by one piece type, so we don't 
+			// need to check wether they are set or not
 			DeactivateBit(&typeBoard, &squareIdx);
 		}
 		ActivateBit(&_pieceTypes[(p >> 1)], &squareIdx);
