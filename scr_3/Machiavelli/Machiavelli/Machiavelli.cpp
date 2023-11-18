@@ -23,19 +23,21 @@ int main()
 	//	}
 	//}
 
-	auto pos = "h5"; 
+	auto pos = "d7"; 
 	Square square = Misc::ToSquareIndex(pos); 
-	b.SetPiece(square, WhitePawn);
+	b.SetPiece(square, BlackPawn);
 
 
-	Move move;
-	b.SetPiece(Misc::ToSquareIndex("e7"), BlackPawn);
-	b.SetTurn(Color::Black);
-	move = MoveHelper::Create("e7e5", MoveHelper::DOUBLE_PAWN_PUSH_FLAG);
+	Move move; 
+	b.SetPiece(Misc::ToSquareIndex("e2"), WhitePawn);
+	b.SetTurn(Color::White); 
+	move = MoveHelper::Create("e2e4", MoveHelper::DOUBLE_PAWN_PUSH_FLAG);
 	b.MakeMove(&move);
 
+	b.SetPiece(Misc::ToSquareIndex("c3"), WhitePawn);
 
-	Bitboard moves = generator.GenerateWhitePawnMoves(square);
+
+	Bitboard moves = generator.GeneratePawnMoves(square);
 	std::cout << b.ToSring(moves);
 
 	return EXIT_SUCCESS;

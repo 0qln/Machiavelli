@@ -82,10 +82,9 @@ public:
 	}
 
 
-	Bitboard GenerateRookMoves(const Square rookIdx)
-	{
-		Color us = Color(_board->GetPiece(rookIdx) & Piece::ColorMask);
-		Color nus = Color(!us);
+	Bitboard GenerateRookMoves(const Square rookIdx) {
+		Color us = Color(_board->GetPiece(rookIdx) & Piece::ColorMask); 
+		Color nus = Color(!us);  
 
 		Bitboard result = 0;
 		Bitboard rank = RankMask[rookIdx / 8];
@@ -129,7 +128,6 @@ public:
 
 
 	Bitboard GenerateBishopMoves(const Square bishopIdx) {
-
 		Color us = Color(_board->GetPiece(bishopIdx) & Piece::ColorMask);
 		Color nus = Color(!us); 
 
@@ -179,49 +177,56 @@ public:
 		return result;
 	}
 
-	Bitboard GenerateWhitePawnMoves(const Square pawnIdx) {
-		
+	Bitboard GeneratePawnMoves(const Square pawnIdx) {
+		Color us = Color(_board->GetPiece(pawnIdx) & Piece::ColorMask);
+		Color nus = Color(!us);
+
 		Bitboard result = 0ULL;
 
 		auto rankIdx = pawnIdx / 8;
 		auto fileIdx = pawnIdx % 8;
 
-		Bitboard enemies = _board->GetColorBitboard(Color::Black);
-		Bitboard friends = _board->GetColorBitboard(Color::White);
+		Bitboard enemies = _board->GetColorBitboard(nus);
+		Bitboard friends = _board->GetColorBitboard(us);
 
 		// Move 1 square forward
 		// We don't need to check wether the pawn is on the last rank or not, which might cause overflow,
 		// as the pawn can never be on the last rank. If it is moved there, it will have to promote.
-		Bitboard forward1 = 1ULL << pawnIdx + 8;
+		Bitboard forward1 = 1ULL << pawnIdx + (us == Color::White ? 8 : -8);
 		if (!((enemies | friends) & forward1)) {
 			result |= forward1;
 
 			// Move 2 squares forward
-			// This is nested inside the `forward1` condition <- If we can't move forward one square,
+			// If we can't move forward one square,
 			// we won't be able to move forward two squares.
-			Bitboard forward2 = forward1 << 8;
-			if (rankIdx == 1 && !((enemies | friends) & forward2)) {
+			//	=> This is nested inside the `forward1` condition 
+			Bitboard forward2 = 1ULL << pawnIdx + (us == Color::White ? 16 : -16);
+			if (rankIdx == (us == Color::White ? 1 : 6) && !((enemies | friends) & forward2)) {
 				result |= forward2;
 			}
 		}
 
 		// Capture left 
-		Bitboard captureLeft = 1ULL << pawnIdx + 7; 
+		Bitboard captureLeft = 1ULL << pawnIdx + (us == Color::White ? 7 : -7);
 		if (fileIdx > 0 && enemies & captureLeft) { 
 			result |= captureLeft; 
 		}
 
 		// Capture right
-		Bitboard captureRight = 1ULL << pawnIdx + 9;
+		Bitboard captureRight = 1ULL << pawnIdx + (us == Color::White ? 9 : -9);
 		if (fileIdx < 7 && enemies & captureRight) { 
 			result |= captureRight; 
 		} 
 
 		// En passant
 		Bitboard enPassant = _board->GetEnPassant();
-		if (rankIdx == 4 && fileIdx < 7 && fileIdx > 0 
-			&& (enPassant & (FileMask[fileIdx-1] | FileMask[fileIdx+1]))) { 
-			result |= enPassant;
+		if (rankIdx == (us == Color::White ? 4 : 3)) {
+			if (fileIdx < 7 && (enPassant & FileMask[fileIdx + 1])) {
+				result |= enPassant;
+			}
+			if (fileIdx > 0 && (enPassant & FileMask[fileIdx - 1])) {
+				result |= enPassant; 
+			}
 		}
 
 		return result; 
