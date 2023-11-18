@@ -177,6 +177,29 @@ public:
 		return result;
 	}
 
+	Bitboard GenerateKingMoves(const Square kingIdx) {
+		Color us = Color(_board->GetPiece(kingIdx) & Piece::ColorMask);
+		Color nus = Color(!us);		
+		Bitboard result = 0ULL;
+		auto rankIdx = kingIdx / 8;
+		auto fileIdx = kingIdx % 8;
+		
+		auto ranks = RankMask[rankIdx];
+		if (rankIdx < 7) ranks |= RankMask[rankIdx + 1];
+		if (rankIdx > 0) ranks |= RankMask[rankIdx - 1];
+
+		auto files = FileMask[fileIdx]; 
+		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
+		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
+
+		result = files & ranks; 
+
+		// Exclude allies and the king himself
+		result ^= _board->GetColorBitboard(us); 
+
+		return result; 
+	}
+
 	Bitboard GeneratePawnMoves(const Square pawnIdx) {
 		Color us = Color(_board->GetPiece(pawnIdx) & Piece::ColorMask);
 		Color nus = Color(!us);
