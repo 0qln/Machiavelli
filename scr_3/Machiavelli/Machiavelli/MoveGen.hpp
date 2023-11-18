@@ -15,6 +15,8 @@ class MoveGen {
 
 	Board* _board;
 
+
+public:
 	const Bitboard FileMask[8]{
 		0x0101010101010101ULL << 0,
 		0x0101010101010101ULL << 1,
@@ -36,57 +38,104 @@ class MoveGen {
 		0b11111111ULL << 8 * 7,
 	};
 
+	// Diagonals parallel to (A1 to H8)
+	const Bitboard DiagMask1[15] {
+		0x8040201008040201ULL / 128 & (RankMask[7]),
+		0x8040201008040201ULL / 64	& (RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL / 32	& (RankMask[5] | RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL / 16	& (RankMask[4] | RankMask[5] | RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL / 8	& (RankMask[3] | RankMask[4] | RankMask[5] | RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL / 4	& (RankMask[2] | RankMask[3] | RankMask[4] | RankMask[5] | RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL / 2	& (RankMask[1] | RankMask[2] | RankMask[3] | RankMask[4] | RankMask[5] | RankMask[6] | RankMask[7]),
+		0x8040201008040201ULL,
+		0x8040201008040201ULL * 2	& (FileMask[1] | FileMask[2] | FileMask[3] | FileMask[4] | FileMask[5] | FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 4	& (FileMask[2] | FileMask[3] | FileMask[4] | FileMask[5] | FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 8	& (FileMask[3] | FileMask[4] | FileMask[5] | FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 16	& (FileMask[4] | FileMask[5] | FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 32	& (FileMask[5] | FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 64	& (FileMask[6] | FileMask[7]),
+		0x8040201008040201ULL * 128 & (FileMask[7]),
+	};
 
-public:
+	// Diagonals parallel to (A8 to H1)
+	const Bitboard DiagMask2[15]{
+		0x0102040810204080ULL / 128 & (FileMask[0]),
+		0x0102040810204080ULL / 64	& (FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL / 32	& (FileMask[2] | FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL / 16	& (FileMask[3] | FileMask[2] | FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL / 8	& (FileMask[4] | FileMask[3] | FileMask[2] | FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL / 4	& (FileMask[5] | FileMask[4] | FileMask[3] | FileMask[2] | FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL / 2	& (FileMask[6] | FileMask[5] | FileMask[4] | FileMask[3] | FileMask[2] | FileMask[1] | FileMask[0]),
+		0x0102040810204080ULL,
+		0x0102040810204080ULL * 2	& (FileMask[7] | FileMask[6] | FileMask[5] | FileMask[4] | FileMask[3] | FileMask[2] | FileMask[1]),
+		0x0102040810204080ULL * 4	& (FileMask[7] | FileMask[6] | FileMask[5] | FileMask[4] | FileMask[3] | FileMask[2]),
+		0x0102040810204080ULL * 8	& (FileMask[7] | FileMask[6] | FileMask[5] | FileMask[4] | FileMask[3]),
+		0x0102040810204080ULL * 16	& (FileMask[7] | FileMask[6] | FileMask[5] | FileMask[4]),
+		0x0102040810204080ULL * 32	& (FileMask[7] | FileMask[6] | FileMask[5]),
+		0x0102040810204080ULL * 64	& (FileMask[7] | FileMask[6]),
+		0x0102040810204080ULL * 128 & (FileMask[7]),
+	};
 
 
 	MoveGen(Board *board) {
 		_board = board;
 	}
 
-	Bitboard GenerateWhiteRookMoves(Square rookIdx)
-	{
-		Bitboard result = 0;
-		int rankIdx = rookIdx / 8;
-		int fileIdx = rookIdx % 8;
-		Bitboard rank = RankMask[rankIdx];
-		Bitboard file = FileMask[fileIdx];
-		Bitboard rookSquare = 1ULL << rookIdx; 
 
-		Bitboard selfDivisorDown = ~FromIndex(rookIdx); 
-		DeactivateBit(&selfDivisorDown, rookIdx); 
+	Bitboard GenerateRookMoves(Square rookIdx)
+	{
+		Color us = Color(_board->GetPiece(rookIdx) & Piece::ColorMask);
+		Color nus = Color(!us);
+
+		Bitboard result = 0;
+		Bitboard rank = RankMask[rookIdx / 8];
+		Bitboard file = FileMask[rookIdx % 8];
+		Bitboard rookSquare = 1ULL << rookIdx;
+
+		Bitboard selfDivisorDown = ~FromIndex(rookIdx);
+		DeactivateBit(&selfDivisorDown, rookIdx);
 
 		Bitboard selfDivisorUp = FromIndex(rookIdx);
-		DeactivateBit(&selfDivisorUp, rookIdx); 
+		DeactivateBit(&selfDivisorUp, rookIdx);
 
 		Bitboard bMask, wMask, square;
 
 		// -< Down >-
-		bMask = _board->GetColorBitboard(Color::Black) & file &  selfDivisorDown;
-		wMask = (_board->GetColorBitboard(Color::White) << 8) & (file & selfDivisorDown | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & file & selfDivisorDown; 
+		bMask = _board->GetColorBitboard(nus) & file & selfDivisorDown;
+		wMask = (_board->GetColorBitboard(us) << 8) & (file & selfDivisorDown | rookSquare); 
+		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & file & selfDivisorDown;
 		result |= square;
 
 		// -< Up >- 
-		bMask = _board->GetColorBitboard(Color::Black) & file & selfDivisorUp;
-		wMask = (_board->GetColorBitboard(Color::White) >> 8) & (file & selfDivisorUp | rookSquare); 
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & file & selfDivisorUp; 
-		result |= square; 
+		bMask = _board->GetColorBitboard(nus) & file & selfDivisorUp; 
+		wMask = (_board->GetColorBitboard(us) >> 8) & (file & selfDivisorUp | rookSquare); 
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & file & selfDivisorUp;
+		result |= square;
 
 		// -< Left >-
-		bMask = _board->GetColorBitboard(Color::Black) & rank & selfDivisorDown;
-		wMask = (_board->GetColorBitboard(Color::White) << 1) & (rank & selfDivisorDown | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & rank & selfDivisorDown;  
+		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorDown; 
+		wMask = (_board->GetColorBitboard(us) << 1) & (rank & selfDivisorDown | rookSquare); 
+		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & rank & selfDivisorDown;
 		result |= square;
 
 		// -< Right >-
-		bMask = _board->GetColorBitboard(Color::Black) & rank & selfDivisorUp; 
-		wMask = (_board->GetColorBitboard(Color::White) >> 1) & (rank & selfDivisorUp | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & rank & selfDivisorUp; 
-		result |= square; 
+		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorUp; 
+		wMask = (_board->GetColorBitboard(us) >> 1) & (rank & selfDivisorUp | rookSquare); 
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & rank & selfDivisorUp;
+		result |= square;
 
 		return result;
 	}
+
+
+	Bitboard GenerateBishopMoves(Square bishopIdx) {
+		Bitboard diag1 = DiagMask1[0];
+		Bitboard diag2 = DiagMask2[0];
+
+		return diag2 /*| diag2*/;
+	}
+
+
 
 	inline void DeactivateBit(Bitboard* board, const Square squareIdx) {
 		*board &= ~(1ULL << squareIdx);
