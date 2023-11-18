@@ -200,6 +200,58 @@ public:
 		return result; 
 	}
 
+	Bitboard GenerateKnightMoves(const Square knightIdx) {
+		Color us = Color(_board->GetPiece(knightIdx) & Piece::ColorMask); 
+		Color nus = Color(!us); 
+		Bitboard result = 0ULL;
+		auto rankIdx = knightIdx / 8;
+		auto fileIdx = knightIdx % 8;
+		Bitboard self = 1ULL << knightIdx;
+		
+		// Include typical squares
+		// upper
+		if (rankIdx < 6) {
+			// right
+			if (fileIdx < 7)
+				result |= self << 17; 
+			// left
+			if (fileIdx > 0)
+				result |= self << 15;
+		}
+		// up
+		if (rankIdx < 7) {
+			// righter
+			if (fileIdx < 6)
+				result |= self << 10; 
+			// lefter
+			if (fileIdx > 1)
+				result |= self << 6;
+		}
+		// lower
+		if (rankIdx > 1) {
+			// left
+			if (fileIdx > 0) 
+				result |= self >> 17; 
+			// right
+			if (fileIdx < 7)
+				result |= self >> 15;
+		}
+		// low
+		if (rankIdx > 0) {
+			// lefter
+			if (fileIdx > 1) 
+				result |= self >> 10; 
+			// righter
+			if (fileIdx < 6)
+				result |= self >> 6;
+		}
+
+		// Exclude squares where allies are standing on
+		result ^= _board->GetColorBitboard(us) & result;
+
+		return result;
+	}
+
 	Bitboard GeneratePawnMoves(const Square pawnIdx) {
 		Color us = Color(_board->GetPiece(pawnIdx) & Piece::ColorMask);
 		Color nus = Color(!us);

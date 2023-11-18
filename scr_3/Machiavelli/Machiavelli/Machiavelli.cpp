@@ -23,11 +23,11 @@ int main()
 	//	}
 	//}
 
-	auto pos = "e4"; 
+	auto pos = "g8"; 
 	Square square = Misc::ToSquareIndex(pos); 
-	b.SetPiece(square, WhiteKing);
+	b.SetPiece(square, WhiteKnight);
 
-	b.SetPiece(Misc::ToSquareIndex("e5"), WhitePawn);
+	//b.SetPiece(Misc::ToSquareIndex("d2"), WhiteKnight);
 
 	//Move move; 
 	//b.SetPiece(Misc::ToSquareIndex("e2"), WhitePawn);
@@ -38,7 +38,7 @@ int main()
 	//b.SetPiece(Misc::ToSquareIndex("c3"), WhitePawn);
 
 
-	Bitboard moves = generator.GenerateKingMoves(square);
+	Bitboard moves = generator.GenerateKnightMoves(square);
 	std::cout << b.ToSring(moves);
 
 	return EXIT_SUCCESS;
