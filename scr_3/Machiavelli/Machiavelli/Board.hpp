@@ -284,6 +284,12 @@ public:
 		*board = (*board & (1ULL << *squareIdx)) | *board << *squareIdx; 
 	}
 
+	void Clear() {
+		_checkers = _pinners = _enPassant = 0;
+		_pieceColors[Color::White] = _pieceColors[Color::Black] = 0;
+		_pieceTypes[PieceType::Pawn] = _pieceTypes[PieceType::Knight] = _pieceTypes[PieceType::Bishop] = _pieceTypes[PieceType::Rook] = _pieceTypes[PieceType::Queen] = 
+			_pieceTypes[PieceType::King] = 0;
+	}
 
 	void SetPiece(const Square squareIdx, const Piece p) {
 

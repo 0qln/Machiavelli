@@ -82,7 +82,7 @@ public:
 	}
 
 
-	Bitboard GenerateRookMoves(Square rookIdx)
+	Bitboard GenerateRookMoves(const Square rookIdx)
 	{
 		Color us = Color(_board->GetPiece(rookIdx) & Piece::ColorMask);
 		Color nus = Color(!us);
@@ -128,11 +128,55 @@ public:
 	}
 
 
-	Bitboard GenerateBishopMoves(Square bishopIdx) {
-		Bitboard diag1 = DiagMask1[0];
-		Bitboard diag2 = DiagMask2[0];
+	Bitboard GenerateWhiteBishopMoves(const Square bishopIdx) {
 
-		return diag2 /*| diag2*/;
+		Color us = Color(_board->GetPiece(bishopIdx) & Piece::ColorMask);
+		Color nus = Color(!us); 
+
+		Bitboard result = 0LL; 
+		auto rankIdx = bishopIdx / 8;
+		auto fileIdx = bishopIdx % 8;
+		Bitboard self = 1ULL << bishopIdx;
+
+		auto diag1Idx = 7 - rankIdx + fileIdx; 
+		Bitboard diag1 = DiagMask1[diag1Idx];
+
+		auto diag2Idx =	rankIdx + fileIdx;		
+		Bitboard diag2 = DiagMask2[diag2Idx];
+
+		Bitboard bMask, wMask, square; 
+
+		Bitboard selfDivisorDown = ~FromIndex(bishopIdx);
+		DeactivateBit(&selfDivisorDown, bishopIdx);
+
+		Bitboard selfDivisorUp = FromIndex(bishopIdx);
+		DeactivateBit(&selfDivisorUp, bishopIdx);
+
+		// -< Bottom Left >- 
+		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorDown; 
+		wMask = (_board->GetColorBitboard(us) << 9) & (diag1 & selfDivisorDown | self);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & diag1 & selfDivisorDown;
+		result |= square;
+
+		// -< Up Right >-
+		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorUp;
+		wMask = (_board->GetColorBitboard(us) >> 9) & (diag1 & selfDivisorUp | self);
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & diag1 & selfDivisorUp; 
+		result |= square;
+
+		// -< Bottom Right >-
+		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorDown;
+		wMask = (_board->GetColorBitboard(us) << 7) & (diag2 & selfDivisorDown | self);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - MsbIdx(bMask | wMask)) & diag2 & selfDivisorDown;
+		result |= square;
+
+		// -< Up Left >-
+		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorUp;
+		wMask = (_board->GetColorBitboard(us) >> 7) & (diag2 & selfDivisorUp | self); 
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - LsbIdx(bMask | wMask)) & diag2 & selfDivisorUp; 
+		result |= square;
+
+		return result;
 	}
 
 
