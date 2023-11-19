@@ -82,6 +82,43 @@ public:
 	}
 
 
+	void GenerateMoves(Move* moveList, Color us) {
+		auto pieces = _board->GetColorBitboard(us);
+		
+		auto square = Square(-1);
+		auto pieceIdx = 0;
+		while ((square = PopLsbIdx(&pieces)) != 64) {
+			pieceIdx += GenerateMoves(moveList+pieceIdx, square); 
+		}
+	}
+
+	int GenerateMoves(Move* moveList, const Square idx) {
+		int moveCount = 0;
+		Bitboard moves = GenerateMoves(idx);
+		Square square = -1;
+		while ((square = PopLsbIdx(&moves)) != 64) {
+			MoveHelper::Flag flag = MoveHelper::QUIET_MOVE_FLAG;
+			*moveList++ = MoveHelper::Create(idx, square, flag);
+			moveCount++;
+		}
+		return moveCount; 
+	}
+
+	Bitboard GenerateMoves(const Square idx) {
+		PieceType type = PieceType((_board->GetPiece(idx) & Piece::TypeMask) >> 1);
+		switch (type)
+		{
+		default: 
+		case PT_NULL: return Bitboard(0);
+		case Pawn: return GeneratePawnMoves(idx);
+		case Knight: return GenerateKnightMoves(idx);
+		case Bishop: return GenerateBishopMoves(idx);
+		case Rook: return GenerateRookMoves(idx);
+		case Queen: return GenerateQueenMoves(idx);
+		case King: return GenerateKingMoves(idx);
+		}
+	}
+
 	Bitboard GenerateRookMoves(const Square rookIdx) {
 		Color us = Color(_board->GetPiece(rookIdx) & Piece::ColorMask); 
 		Color nus = Color(!us);  
@@ -198,6 +235,13 @@ public:
 		result ^= _board->GetColorBitboard(us); 
 
 		return result; 
+	}
+
+	Bitboard GenerateQueenMoves(const Square queenIdx) {
+		Color us = Color(_board->GetPiece(queenIdx) & Piece::ColorMask);
+		Color nus = Color(!us);
+
+		return GenerateRookMoves(queenIdx) | GenerateBishopMoves(queenIdx);
 	}
 
 	Bitboard GenerateKnightMoves(const Square knightIdx) {
