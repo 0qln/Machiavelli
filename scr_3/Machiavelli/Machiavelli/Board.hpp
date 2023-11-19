@@ -65,6 +65,10 @@ private:
 
 public:
 
+	bool GetCastlingRights(Color color, bool kingSide) {
+		return kingSide ? _kingCasle[color] : _queenCasle[color];
+	}
+
 	Bitboard GetColorBitboard(Color color) {
 		return _pieceColors[color];
 	}

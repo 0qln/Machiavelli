@@ -82,19 +82,19 @@ public:
 	}
 
 
-	void GenerateMoves(Move* moveList, Color us) {
+	void GeneratePseudoLegalMoves(Move* moveList, Color us) {
 		auto pieces = _board->GetColorBitboard(us);
 		
 		auto square = Square(-1);
 		auto pieceIdx = 0;
 		while ((square = PopLsbIdx(&pieces)) != 64) {
-			pieceIdx += GenerateMoves(moveList+pieceIdx, square); 
+			pieceIdx += GeneratePseudoLegalMoves(moveList+pieceIdx, square); 
 		}
 	}
 
-	int GenerateMoves(Move* moveList, const Square idx) {
+	int GeneratePseudoLegalMoves(Move* moveList, const Square idx) {
 		int moveCount = 0;
-		Bitboard moves = GenerateMoves(idx);
+		Bitboard moves = GeneratePseudoLegalMoves(idx);
 		Square square = -1;
 		while ((square = PopLsbIdx(&moves)) != 64) {
 			MoveHelper::Flag flag = MoveHelper::QUIET_MOVE_FLAG;
@@ -104,7 +104,7 @@ public:
 		return moveCount; 
 	}
 
-	Bitboard GenerateMoves(const Square idx) {
+	Bitboard GeneratePseudoLegalMoves(const Square idx) {
 		PieceType type = PieceType((_board->GetPiece(idx) & Piece::TypeMask) >> 1);
 		switch (type)
 		{
@@ -162,7 +162,6 @@ public:
 
 		return result;
 	}
-
 
 	Bitboard GenerateBishopMoves(const Square bishopIdx) {
 		Color us = Color(_board->GetPiece(bishopIdx) & Piece::ColorMask);
@@ -233,6 +232,16 @@ public:
 
 		// Exclude allies and the king himself
 		result ^= _board->GetColorBitboard(us); 
+
+		// King side castling
+		if (_board->GetCastlingRights(us, true)) {
+			result |= RankMask[rankIdx] & FileMask[FileTable::H];
+		}
+
+		// Queen side castling
+		if (_board->GetCastlingRights(us, false)) {
+			result |= RankMask[rankIdx] & FileMask[FileTable::A];
+		}
 
 		return result; 
 	}
