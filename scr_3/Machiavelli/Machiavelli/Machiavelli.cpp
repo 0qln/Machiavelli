@@ -6,35 +6,46 @@
 #include "Move.hpp"
 #include "Board.hpp"
 #include "MoveGen.hpp"
+#include "BitHelper.hpp"
 
 
-int main()
-{
-	Board b = Board::Board("8/8/8/8/8/8/8/8 w - - 0 1");
-	MoveGen generator = MoveGen::MoveGen(&b); 
+unsigned long long  makeMoves(Board* pB, int maxDepth, const int initialDepth, bool pv) {
+	unsigned long long moveCount = 0;
 
-	//for (File x = FileTable::A; x <= FileTable::H; x++) {
-	//	for (Rank y = 0; y <= 7; y++) {
-	//		b.Clear();
-	//		Square square = Misc::SquareIndex_0IDX(y, x);
-	//		b.SetPiece(square, Piece::WhiteBishop); 
-	//		Bitboard moves = generator.GenerateBishopMoves(square); 
-	//		std::cout << b.ToSring(moves); 
-	//	}
-	//}
+	if (maxDepth == 0)
+		return 1;
 
-	auto pos = "e4"; 
-	Square square = Misc::ToSquareIndex(pos); 
-	b.SetPiece(square, BlackKnight);
-	b.SetPiece(Misc::ToSquareIndex("e2"), BlackKnight);
+	auto gen = MoveGen::MoveGen(pB);
+	auto movelist = gen.GeneratePseudoLegalMoves(pB->GetTurn());
 
-	Move movelist[50];
-	generator.GeneratePseudoLegalMoves(movelist, Black);
+	for (int i = 0; i < movelist.size(); i++) {
+		pB->MakeMove(&movelist[i]);
+		
+		bool movePV = false;
+		int count = makeMoves(pB, maxDepth - 1, initialDepth, movePV);
+		if (pv) {
+			std::cout << pB->ToSring() << "\n";
+			std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+		}
+		else {
+			assert(true);
+		}
+		moveCount += count;
 
-
-	for (auto move : movelist) {
-		std::cout << b.ToSring((1ULL << MoveHelper::GetTo(&move)) | (1ULL << MoveHelper::GetFrom(&move))) << "\n";
+		pB->UndoMove(&movelist[i]);
 	}
+
+	return moveCount;
+}
+
+int main() {
+	Board b = Board::Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	MoveGen generator = MoveGen::MoveGen(&b); 
+	//std::cout << b.ToSring();
+
+	std::cout << makeMoves(&b, 4, 0, true);
+
 
 	return EXIT_SUCCESS;
 }
+ 

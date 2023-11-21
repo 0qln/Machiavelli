@@ -31,7 +31,7 @@ enum CompassRose : int {
 using Score = __int32;
 
 enum PieceType : int {
-	PT_NULL =		0, // We will treat this as an actual piece type
+	PT_NULL =		0,
 	Pawn =			1,
 	Knight =		2,
 	Bishop =		3,
@@ -57,7 +57,8 @@ using Rank = int;
 enum RankTable : Rank { };
 
 enum Piece : int {
-	P_NULL = 0,
+	WhiteNULL = 0,
+	BlackNULL = 1,
 
 	ColorMask = 1, 
 	TypeMask = ~ColorMask,
@@ -84,17 +85,20 @@ using Move = unsigned __int16;
 class Misc {
 public:
 
-	const static Piece NullPiece = Piece(0);
-
 	/// <summary>
 	/// receives for example 'e3'
 	/// </summary>
 	/// <param name="square"></param>
 	/// <returns></returns>
 	static inline Square ToSquareIndex(const std::string* square) {
-		File file =	(*square).at(0) - 'a';
-		Rank rank = (*square).at(1) - '1';
+		File file =	square->at(0) - 'a';
+		Rank rank = square->at(1) - '1';
 		return SquareIndex_0IDX(rank, file);
+	}
+	static inline std::string FromSquareIndex(const Square square) {
+		char file = (square % 8) + 'a';
+		char rank = (square / 8) + '1';
+		return std::string({ file, rank });
 	}
 	static inline Square ToSquareIndex(const std::string square) {
 		return ToSquareIndex(&square);

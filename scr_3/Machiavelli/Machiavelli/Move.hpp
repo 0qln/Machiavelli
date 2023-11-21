@@ -40,7 +40,7 @@ public:
 	};
 
 	enum FlagMasks : Mask {
-		QUITE_MOVE_MASK					= Flags::QUIET_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
+		QUIET_MOVE_MASK					= Flags::QUIET_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
 		DOUBLE_PAWN_PUSH_MASK			= Flags::DOUBLE_PAWN_PUSH_FLAG			<< Shifts::FLAG_SHIFT,
 		KING_CASTLE_MASK				= Flags::KING_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
 		QUEEN_CASTLE_MASK				= Flags::QUEEN_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
@@ -71,7 +71,7 @@ public:
 	//		see wether it's worth
 
 	static inline bool IsQuietMove(const Move* move) {
-		return (*move & Masks::FLAG_MASK) == FlagMasks::QUITE_MOVE_MASK;
+		return (*move & Masks::FLAG_MASK) == FlagMasks::QUIET_MOVE_MASK;
 	}
 
 	static inline bool IsDoublePawnPush(const Move* move) {
@@ -168,5 +168,13 @@ public:
 		return Create(fromSqr, toSqr, flag);
 	}
 
+	static std::string ToString(Move move) {
+		Square fromSqr = GetFrom(&move);
+		Square toSqr = GetTo(&move);
+		auto from = Misc::FromSquareIndex(fromSqr);
+		auto to = Misc::FromSquareIndex(toSqr);
+		from.append(to);
+		return from;  
+	}
 
 };

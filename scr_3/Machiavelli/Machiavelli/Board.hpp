@@ -18,6 +18,29 @@
 
 #include "Misc.hpp"
 #include "Move.hpp"
+#include "BitHelper.hpp"
+
+
+struct BoardState {
+	BoardState* previous;
+	
+	Piece capturedPiece;
+	Square capturedSquare;
+
+	Move move;
+	
+	int ply;
+
+public:
+	BoardState() { 
+		previous = nullptr;
+		capturedPiece = Piece(0);
+		capturedSquare = Square(-1);
+		move = Move(0);
+		ply = -1;
+	}
+};
+
 
 class Board {
 
@@ -30,14 +53,17 @@ private:
 
 	Color _turn = Color::White;
 
-	bool _kingCasle[2];
-	bool _queenCasle[2];
+	bool _kingCastle[2];
+	bool _queenCastle[2];
 
-	Bitboard _checkers = 0, _pinners = 0;
+	Bitboard _checkers, _pinners;
+	Bitboard _attacks[2];
 	Bitboard _pieceTypes[7]; 
 	Bitboard _pieceColors[2];
-	Bitboard _enPassant = 0;
+	Bitboard _enPassantBitboard;
+	Square _enPassantSquare;
 
+	BoardState _currentState;
 
 	//char PieceChars[13]{
 	//	'.',
@@ -45,7 +71,8 @@ private:
 	//	'♟', '♞', '♝', '♜', '♛', '♚', //black
 	//};
 	std::map<Piece, char> PieceChars = {
-		std::make_pair(Piece::P_NULL, '.'),
+		std::make_pair(Piece::WhiteNULL, '.'),
+		std::make_pair(Piece::BlackNULL, '.'),
 
 		std::make_pair(Piece::WhitePawn,	'P'),
 		std::make_pair(Piece::WhiteKnight,	'N'),
@@ -63,10 +90,29 @@ private:
 	};
 
 
+	void SetState(BoardState* newState) {
+		newState->previous = new BoardState(_currentState);
+		_currentState = *newState;
+	}
+
+	void PopState() {
+		_currentState = *_currentState.previous;
+	}
+
+	void SetEnpassant(Square idx) {
+		_enPassantSquare = idx;
+		_enPassantBitboard = 1ULL << idx;
+	}
+
+	void ResetEnpassant() {
+		_enPassantSquare = -1;
+		_enPassantBitboard = 0ULL;
+	}
+
 public:
 
 	bool GetCastlingRights(Color color, bool kingSide) {
-		return kingSide ? _kingCasle[color] : _queenCasle[color];
+		return kingSide ? _kingCastle[color] : _queenCastle[color];
 	}
 
 	Bitboard GetColorBitboard(Color color) {
@@ -77,8 +123,12 @@ public:
 		return _pieceTypes[type];
 	}
 
-	Bitboard GetEnPassant() {
-		return _enPassant;
+	Bitboard GetEnPassantBitboard() {
+		return _enPassantBitboard;
+	}
+
+	Square GetEnPassantSquare() {
+		return _enPassantSquare;
 	}
 
 	void SetTurn(Color turn) {
@@ -89,12 +139,21 @@ public:
 		return _turn; 
 	}
 
+	bool IsInCheck(Color color = Color::White) {
+		return _attacks[!color] & _pieceTypes[PieceType::King] & _pieceColors[color];
+	}
+
 
 	static inline void Flip(Bitboard* board) {
 		*board ^= 56;
 	}
 
+
 	Board(std::string fen) {
+		_currentState = BoardState::BoardState();
+		_currentState.ply = 0;
+		_enPassantSquare = -1;
+
 		std::string str;
 
 		int parts[6];
@@ -122,7 +181,7 @@ public:
 			}
 
 			/// get piece char as Piece Type
-			Piece p = Piece::P_NULL;
+			Piece p = Piece::WhiteNULL;
 			for (auto& i : PieceChars) {
 				if (i.second == fen.at(fenIdx)) {
 					p = i.first;
@@ -148,17 +207,17 @@ public:
 
 		// castling
 		str = fen.substr(parts[2], parts[3] - parts[2]);
-		if (str.find('K') != std::string::npos) _kingCasle[Color::White] = true;
-		if (str.find('Q') != std::string::npos) _queenCasle[Color::White] = true;
-		if (str.find('k') != std::string::npos) _kingCasle[Color::Black] = true;
-		if (str.find('q') != std::string::npos) _queenCasle[Color::Black] = true;
+		if (str.find('K') != std::string::npos) _kingCastle [Color::White] = true;
+		if (str.find('Q') != std::string::npos) _queenCastle[Color::White] = true;
+		if (str.find('k') != std::string::npos) _kingCastle [Color::Black] = true;
+		if (str.find('q') != std::string::npos) _queenCastle[Color::Black] = true;
 		
 
 		// en passant
 		str = fen.substr(parts[3], parts[4] - parts[3]);
 		if (str.find('-') == std::string::npos) {
-			Square idx = Misc::ToSquareIndex(&str);
-			ActivateBit(&_enPassant, &idx);
+			_enPassantSquare = Misc::ToSquareIndex(&str);
+			BitHelper::ActivateBit(&_enPassantBitboard, &_enPassantSquare);
 		}
 
 
@@ -174,191 +233,252 @@ public:
 
 
 
-
-
-
 	// just assumes the move parameter is a legal one.
 	void MakeMove(const Move* move, bool changeTurn = true) {
-		Color us = _turn;
-
-		// handle castling
-		if (MoveHelper::IsCastle(move)) {
-			// apply castling rules
-			Move kingMove, rookMove;
-			int rank = us == Color::White ? Rank(0) : Rank(7);
-			// init moves
-			if (MoveHelper::IsKingSideCastle(move)) {
-				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::G, MoveHelper::QUITE_MOVE_MASK);
-				rookMove = MoveHelper::Create(rank + FileTable::H, rank + FileTable::F, MoveHelper::QUITE_MOVE_MASK);
-				_kingCasle[us] = false;
-			}
-			if (MoveHelper::IsQueenSideCastle(move)) {
-				kingMove = MoveHelper::Create(rank + FileTable::E, rank + FileTable::C, MoveHelper::QUITE_MOVE_MASK);
-				rookMove = MoveHelper::Create(rank + FileTable::A, rank + FileTable::D, MoveHelper::QUITE_MOVE_MASK);
-				_queenCasle[us] = false;
-			}
-
-			MakeMove(&kingMove);
-			MakeMove(&rookMove);
-
-			return;
-		}
+		const Square from = MoveHelper::GetFrom(move); 
+		const Square to = MoveHelper::GetTo(move); 
+		const Piece movingPiece = GetPiece(from);
+		const int fRankIdx = from / 8;
+		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
 
 		
-		const Square from = MoveHelper::GetFrom(move);
-		const Square to = MoveHelper::GetTo(move);
-		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
-		const Piece movingP = GetPiece(from);
+		// Remember what happened
+		BoardState newState = BoardState::BoardState();
+		newState.move = *move;
+		newState.ply = ++_ply;
+		newState.capturedSquare = to;
+		newState.capturedPiece = GetPiece(to);
+
+
+		// handle castling
+		if (MoveHelper::IsKingSideCastle(move)) {
+			SetPiece(fRankIdx + FileTable::E, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::G, Piece((PieceType::King << 1) | _turn));
+			SetPiece(fRankIdx + FileTable::H, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::F, Piece((PieceType::Rook << 1) | _turn));
+			_kingCastle[_turn] = false;
+			return;
+		}
+		else if (MoveHelper::IsQueenSideCastle(move)) {
+			SetPiece(fRankIdx + FileTable::E, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::C, Piece((PieceType::King << 1) | _turn));
+			SetPiece(fRankIdx + FileTable::A, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::D, Piece((PieceType::Rook << 1) | _turn));
+			_queenCastle[_turn] = false;
+			return;
+		}		
 
 
 		// castling rights
-		if (movingP >> 1 == PieceType::Rook && from == SquareTable::A1) _queenCasle[Color::White] = false;
-		if (movingP >> 1 == PieceType::Rook && from == SquareTable::H1) _kingCasle [Color::White] = false;
-		if (movingP >> 1 == PieceType::Rook && from == SquareTable::A8) _queenCasle[Color::Black] = false;
-		if (movingP >> 1 == PieceType::Rook && from == SquareTable::H8) _kingCasle [Color::Black] = false;
-		if (movingP >> 1 == PieceType::King) {
-			_queenCasle[us] = false;
-			_kingCasle [us] = false;
-		}
+		if (movingPiece >> 1 == PieceType::Rook && from == SquareTable::A1) _queenCastle[Color::White] = false;
+		if (movingPiece >> 1 == PieceType::Rook && from == SquareTable::H1) _kingCastle [Color::White] = false;
+		if (movingPiece >> 1 == PieceType::Rook && from == SquareTable::A8) _queenCastle[Color::Black] = false;
+		if (movingPiece >> 1 == PieceType::Rook && from == SquareTable::H8) _kingCastle [Color::Black] = false;
+		if (movingPiece >> 1 == PieceType::King) { _queenCastle[_turn] = false; _kingCastle [_turn] = false; }
+
 
 		// handle captures
 		if (MoveHelper::IsCapture(move)) {
+			
+			// if the rook's gone, we can no longer castle
+			if (to == SquareTable::A1) { _queenCastle[Color::White] = false; }
+			if (to == SquareTable::H1) { _kingCastle[Color::White] = false; }
+			if (to == SquareTable::A8) { _queenCastle[Color::Black] = false; }
+			if (to == SquareTable::H8) { _kingCastle[Color::Black] = false; }
+
+			// handle en passant capture
 			if (MoveHelper::IsEnPassantCapture(move)) {
-				int removeRank = 3 + !us;
-				int removeFile = to % 8;
-				Square removeIdx = removeFile + 8 * removeRank;
-
-				// remove piece with offset...
-				SetPiece(removeIdx, Misc::NullPiece);
-
-				// remove possible en passant capture
-				_enPassant = 0;
-			}
-			else {
-				// remove piece at `to` Square
-				SetPiece(to, Misc::NullPiece);
+				// give offset to `removeIdx`
+				newState.capturedSquare += (_turn * 2 - 1) * 8;
+				// get capture piece (has to be a pawn)
+				newState.capturedPiece = Piece(!_turn | (PieceType::Pawn << 1));
+				// clear the square of the pawn that got en passanted
+				SetPiece(newState.capturedSquare, Piece::WhiteNULL);
 			}
 		}
 
 		
 		// handle promotion
-		Piece newP;
+		Piece newP = movingPiece; 
 		if (MoveHelper::IsPromotion(move)) {
 			int type = MoveHelper::IsPromotionWithCapture(move) ? flag - 4 : flag;
-			int color = !us;
-			newP = Piece((type << 1) | color);
-		}
-		else {
-			newP = movingP;
+			newP = Piece((type << 1) | _turn);
 		}
 
 
 		// move the piece
-		SetPiece(from, Piece::P_NULL);
+		SetPiece(from, Piece::WhiteNULL);
 		SetPiece(to, newP);
 
 
-		if (MoveHelper::IsDoublePawnPush(move)) {
-			// remember as a possible en passant capture
-			// ex: 
-			//		e4 (-remember e3)
-			//		e5 (-remember e6)
-			
-			int rank = 2 + +us * 3; //0-indexed
-			int file = to % 8;		//0-indexed
-			Square sq = file + rank * 8;
-			ActivateBit(&_enPassant, &sq);
+		// remove old en passant
+		ResetEnpassant();
+		// remember as possible en passant capture, if possible
+		if (MoveHelper::IsDoublePawnPush(move)) {		
+			SetEnpassant(to + (_turn * 2 - 1) * 8);
 		}
+
 
 		// change turn
 		if (changeTurn) {
-			_turn = Color(!_turn);
+			ChangeTurn();
 		}
+
+		SetState(&newState);
+	}
+
+	inline void ChangeTurn() {
+		_turn = Color(!_turn);
 	}
 
 	// just assumes the move parameter is a legal one.
-	void UndoMove(const Move* move) {
-	
+	void UndoMove(const Move* move, bool changeTurn = true) {
+		const Square from = MoveHelper::GetFrom(move);
+		const Square to = MoveHelper::GetTo(move);
+		Piece movingPiece = GetPiece(to);
+		Piece capturedPiece = _currentState.capturedPiece;
+		Square capturedIdx = to;
+		const int fRankIdx = from / 8;
+
+
+		// handle castling
+		if (MoveHelper::IsKingSideCastle(move)) {
+			// king 
+			SetPiece(fRankIdx + FileTable::G, Piece::WhiteNULL); 
+			SetPiece(fRankIdx + FileTable::E, Piece((PieceType::King << 1) | _turn));
+
+			// rook
+			SetPiece(fRankIdx + FileTable::F, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::H, Piece((PieceType::Rook << 1) | _turn));
+
+			_kingCastle[_turn] = true;
+			return;
+		}
+		else if (MoveHelper::IsQueenSideCastle(move)) {
+			// king 
+			SetPiece(fRankIdx + FileTable::C, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::E, Piece((PieceType::King << 1) | _turn));
+
+			// rook
+			SetPiece(fRankIdx + FileTable::D, Piece::WhiteNULL);
+			SetPiece(fRankIdx + FileTable::A, Piece((PieceType::Rook << 1) | _turn));
+
+			_queenCastle[_turn] = true;
+			return;
+		}
+
+		
+		// handle promotion
+		if (MoveHelper::IsPromotion(move)) {
+			movingPiece = Piece(_turn | (PieceType::Pawn << 1));
+		}
+
+
+		// en passant capture
+		if (MoveHelper::IsEnPassantCapture(move)) {
+			capturedPiece = Piece(!_turn | (PieceType::Pawn << 1));
+			capturedIdx = to + (_turn * 2 - 1) * 8;
+		}
+
+
+		// double pawn push
+		ResetEnpassant();
+		if (MoveHelper::IsDoublePawnPush(move)) {
+			SetEnpassant(to + (_turn * 2 - 1) * 8);
+		}
+
+
+		// Move piece
+		SetPiece(to, Piece::WhiteNULL);
+		SetPiece(capturedIdx, capturedPiece);
+		SetPiece(from, movingPiece);
+
+
+		// Change state
+		PopState();
+
+
+		// Change turn
+		if (changeTurn) {
+			ChangeTurn();
+		}
+
+		--_ply;
+
 	}
 
 
 
-	inline void DeactivateBit(Bitboard* board, const Square* squareIdx) {
-		*board &= ~(1ULL << *squareIdx);
-	}
-	inline void ActivateBit(Bitboard* board, const Square* squareIdx) {
-		*board |= (1ULL << *squareIdx);
-	}
-	inline void FlipBit(Bitboard* board, const Square* squareIdx) {
-		*board ^= (1ULL << *squareIdx);
-	}
-	inline void FlipBits(Bitboard* board, const Square* squareIdx1, const Square* squareIdx2) {
-		*board ^= (1ULL << *squareIdx1 | 1ULL << *squareIdx2);
-	}
-	inline bool GetBit(Bitboard board, const Square* squareIdx) {
-		return (board >> *squareIdx) & 1;
-	}
-	inline void SetBit(Bitboard* board, const Square* squareIdx, const bool value) {
-		*board = (*board & (1ULL << *squareIdx)) | *board << *squareIdx; 
-	}
 
 	void Clear() {
-		_checkers = _pinners = _enPassant = 0;
+		_checkers = _pinners = _enPassantBitboard = 0;
+		_enPassantSquare = -1;
 		_pieceColors[Color::White] = _pieceColors[Color::Black] = 0;
 		_pieceTypes[PieceType::Pawn] = _pieceTypes[PieceType::Knight] = _pieceTypes[PieceType::Bishop] = _pieceTypes[PieceType::Rook] = _pieceTypes[PieceType::Queen] = 
-			_pieceTypes[PieceType::King] = 0;
+			_pieceTypes[PieceType::King] = _pieceTypes[PieceType::PT_NULL] = 0;
 	}
 
 	void SetPiece(const Square squareIdx, const Piece p) {
-		for (Bitboard typeBoard : _pieceTypes) {
+		for (int i = PieceType::Pawn; i <= PieceType::King; ++i) {
 			// each square can only be occupied by one piece type, so we don't 
 			// need to check wether they are set or not
-			DeactivateBit(&typeBoard, &squareIdx);
+			BitHelper::DeactivateBit(&_pieceTypes[i], &squareIdx);
 		}
-		ActivateBit(&_pieceTypes[(p >> 1)], &squareIdx);
 
+		// handle not-NULL-pieces
+		if (p >> 1) {
+			// activate piece type
+			_pieceTypes[p >> 1] |= 1ULL << squareIdx;
 
-		if ((p & Piece::ColorMask) == Color::White) 
-			 ActivateBit(&_pieceColors[Color::White], &squareIdx);
-		else DeactivateBit(&_pieceColors[Color::White], &squareIdx);
-
-
-		if ((p & Piece::ColorMask) == Color::Black)
-			 ActivateBit(&_pieceColors[Color::Black], &squareIdx);
-		else DeactivateBit(&_pieceColors[Color::Black], &squareIdx);
+			for (int i = Color::White; i <= Color::Black; ++i) {
+				if ((p & Piece::ColorMask) == i) {
+					BitHelper::ActivateBit(&_pieceColors[i], &squareIdx);
+				}
+				else {
+					BitHelper::DeactivateBit(&_pieceColors[i], &squareIdx);
+				}
+			}
+		}	
+		// handle colors for NULL-pieces
+		else {
+			for (int i = Color::White; i <= Color::Black; ++i) {
+				BitHelper::DeactivateBit(&_pieceColors[i], &squareIdx);
+			}
+		}
 	}
 
 	Piece GetPiece(const Square index) const {
-		Bitboard sm = SquareMask(&index);
-		int piece = Piece::P_NULL;
+		int piece = Piece::WhiteNULL;
 
-		for (int bi = PieceType::PT_NULL; bi <= PieceType::King; bi++) {
-			if ((_pieceTypes[bi] & sm) != 0) {
-				piece |= PieceType(bi) << 1;
-				break;
+		// Get type
+		for (int i = PieceType::Pawn; i <= PieceType::King; ++i) {
+			if (_pieceTypes[i] & SquareMask(&index)) {
+				piece |= PieceType(i) << 1;
+
+				// Get color
+				piece |= IsBlack(&index); 
+
+				return Piece(piece); 
 			}
 		}
 
-		piece |= IsBlack(&index);
-
-		return Piece(piece);
+		return Piece::WhiteNULL;
 	}
 
 
 	inline bool IsWhite(const Square* index) const {
-		return (_pieceColors[Color::White] & SquareMask(index)) != 0;
+		return _pieceColors[Color::White] & SquareMask(index);
 	}
 	inline bool IsBlack(const Square* index) const {
-		return (_pieceColors[Color::Black] & SquareMask(index)) != 0;
+		return _pieceColors[Color::Black] & SquareMask(index);
 	}
 
 	inline Bitboard SquareMask(const Square* index) const {
-		return Bitboard(1) << *index;
+		return 1ULL << *index;
 	}
 
 
-
-	std::string ToSring(Bitboard highlightSquares) {
+	std::string ToSring(Bitboard highlightSquares = 0) {
 		std::stringstream ss;
 
 
@@ -371,7 +491,7 @@ public:
 				auto p = GetPiece(idx);
 				char c = PieceChars[p]; 
 				if (/*c == PieceChars[Piece::P_NULL] &&*/
-					GetBit(highlightSquares, &idx)) {
+					BitHelper::GetBit(highlightSquares, &idx)) {
 					c = 'x';
 				}
 

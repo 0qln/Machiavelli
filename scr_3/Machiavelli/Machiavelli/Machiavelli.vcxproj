@@ -132,6 +132,7 @@
     <ClCompile Include="MoveGen.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BitHelper.hpp" />
     <ClInclude Include="Board.hpp" />
     <ClInclude Include="Misc.hpp" />
     <ClInclude Include="Move.hpp" />
