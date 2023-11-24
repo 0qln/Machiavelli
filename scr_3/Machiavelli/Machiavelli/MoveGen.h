@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <bit>
 #include <bitset>
 #include <cstdint>
@@ -7,15 +8,17 @@
 #include <concepts>
 #include <iomanip>
 
-#include "Misc.hpp"
-#include "Board.hpp"
-#include "BitHelper.hpp"
+#include "Misc.h"
+#include "Board.h"
+#include "BitHelper.h"
+
+
+class Board;
 
 
 class MoveGen {
 
 	Board* _board;
-
 
 public:
 	const Bitboard FileMask[8]{

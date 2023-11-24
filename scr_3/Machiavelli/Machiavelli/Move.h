@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Misc.hpp"
+#include "Misc.h"
 
 
 class MoveHelper
@@ -67,7 +67,7 @@ public:
 	//		MoveHelper::EvaluateMove = &myMove;
 	//		bool isquiet = EvaluateMove::IsQuiet();
 	// 
-	//		would have to perform a pert to
+	//		would have to perform a perft to
 	//		see wether it's worth
 
 	static inline bool IsQuietMove(const Move* move) {

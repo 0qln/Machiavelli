@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -16,9 +15,14 @@
 #include <iostream>
 #include <assert.h>
 
-#include "Misc.hpp"
-#include "Move.hpp"
-#include "BitHelper.hpp"
+
+#include "Misc.h"
+#include "Move.h"
+#include "BitHelper.h"
+#include "MoveGen.h"
+
+
+class MoveGen;
 
 
 struct BoardState {
@@ -43,8 +47,6 @@ public:
 
 
 class Board {
-
-
 private:
 
 	int _ply = 0;
@@ -56,8 +58,8 @@ private:
 	bool _kingCastle[2];
 	bool _queenCastle[2];
 
-	Bitboard _checkers, _pinners;
-	Bitboard _attacks[2];
+	//Bitboard _checkers, _pinners;
+	Bitboard _attackers[64];
 	Bitboard _pieceTypes[7]; 
 	Bitboard _pieceColors[2];
 	Bitboard _enPassantBitboard;
@@ -69,7 +71,7 @@ private:
 	//	'.',
 	//	'♙', '♘', '♗', '♖', '♕', '♔', //white
 	//	'♟', '♞', '♝', '♜', '♛', '♚', //black
-	//};
+	//}; ??
 	std::map<Piece, char> PieceChars = {
 		std::make_pair(Piece::WhiteNULL, '.'),
 		std::make_pair(Piece::BlackNULL, '.'),
@@ -139,13 +141,19 @@ public:
 		return _turn; 
 	}
 
-	bool IsInCheck(Color color = Color::White) {
-		return _attacks[!color] & _pieceTypes[PieceType::King] & _pieceColors[color];
+	inline bool IsInCheck() { return IsInCheck(GetTurn()); }
+	inline bool IsInCheck(Color color) {
+		//return _attacksColors[!color] & _pieceTypes[PieceType::King] & _pieceColors[color];
 	}
 
+	// Return a bitboard of all squares that can be used to resolve the current check
+	inline Bitboard GetCheckBlockades() { return GetCheckBlockades(GetTurn()); }
+	inline Bitboard GetCheckBlockades(Color color) {
+		if (!IsInCheck(color)) {
+			return ~0ULL;
+		}
 
-	static inline void Flip(Bitboard* board) {
-		*board ^= 56;
+
 	}
 
 
@@ -192,6 +200,7 @@ public:
 			/// evaluate
 			int idx = squareIdx ^ 7;
 			SetPiece(idx, p);
+			//MoveGen gen = MoveGen::MoveGen(this);
 
 			squareIdx--;
 		}
@@ -216,8 +225,7 @@ public:
 		// en passant
 		str = fen.substr(parts[3], parts[4] - parts[3]);
 		if (str.find('-') == std::string::npos) {
-			_enPassantSquare = Misc::ToSquareIndex(&str);
-			BitHelper::ActivateBit(&_enPassantBitboard, &_enPassantSquare);
+			SetEnpassant(Misc::ToSquareIndex(&str));
 		}
 
 
@@ -411,7 +419,8 @@ public:
 
 
 	void Clear() {
-		_checkers = _pinners = _enPassantBitboard = 0;
+		//_checkers = _pinners = 
+		_enPassantBitboard = 0;
 		_enPassantSquare = -1;
 		_pieceColors[Color::White] = _pieceColors[Color::Black] = 0;
 		_pieceTypes[PieceType::Pawn] = _pieceTypes[PieceType::Knight] = _pieceTypes[PieceType::Bishop] = _pieceTypes[PieceType::Rook] = _pieceTypes[PieceType::Queen] = 

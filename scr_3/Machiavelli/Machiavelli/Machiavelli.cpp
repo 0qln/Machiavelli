@@ -2,11 +2,11 @@
 #include <iostream>
 #include <string>
 
-#include "Misc.hpp"
-#include "Move.hpp"
-#include "Board.hpp"
-#include "MoveGen.hpp"
-#include "BitHelper.hpp"
+#include "Misc.h"
+#include "Move.h"
+#include "Board.h"
+#include "MoveGen.h"
+#include "BitHelper.h"
 
 
 unsigned long long  makeMoves(Board* pB, int maxDepth, const int initialDepth, bool pv) {
