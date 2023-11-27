@@ -1,25 +1,23 @@
-#include "Board.h"
 #include "BitHelper.h"
-#include "Move.h"
+#include "Board.h"
 #include "Misc.h"
+#include "Move.h"
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <map>
-#include <list>
 #include <algorithm>
-#include <cstdint>
-#include <vector>
 #include <array>
+#include <assert.h>
 #include <bit>
 #include <bitset>
 #include <cstdint>
+#include <cstdint>
 #include <iostream>
-#include <assert.h>
+#include <iostream>
+#include <list>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
 
-
-#define DEBUG 
 
 
 void Board::MakeMove(const Move* move, bool changeTurn)
@@ -128,7 +126,7 @@ void Board::MakeMove(const Move* move, bool changeTurn)
 
 
 	// update check vars
-	MoveGen generator = MoveGen::MoveGen(this);
+	//MoveGen generator = MoveGen::MoveGen(this);
 
 
 	// change turn
@@ -137,12 +135,6 @@ void Board::MakeMove(const Move* move, bool changeTurn)
 	}
 
 	SetState(&newState);
-
-
-#ifdef DEBUG
-	std::cout << ToString() << "\n";
-	std::cout << "Is in check: " << IsInCheck() << "\n";
-#endif
 }
 
 void Board::UndoMove(const Move* move, bool changeTurn)
@@ -389,7 +381,25 @@ bool Board::IsInCheck()
 // TODO
 bool Board::IsInCheck(Color color)
 {
-	return false;
+	bool ret = false;
+
+	ChangeTurn();
+	auto plMoves = MoveGen::MoveGen(this).GeneratePseudoLegalMoves();
+	ChangeTurn();
+
+	for (auto move : plMoves)
+	{
+		MakeMove(&move, false);
+
+		//std::cout << ToString() << "\n";
+
+		if (BitHelper::CountBits(GetPieceBitboard(PieceType::King) & GetColorBitboard(color)) == 0) {
+			ret = true;
+			//std::cout << "check" << '\n';
+		}
+		UndoMove(&move, false);
+	}
+	return ret;
 }
 
 Bitboard Board::GetCheckBlockades()
@@ -480,14 +490,17 @@ Board::Board(std::string fen)
 	}
 
 
-	// ply
-	str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
-	_ply = stoi(str);
+	// optional:
+	if (parts[5] >= 0 && parts[5] < fen.size()) {
+		// ply
+		str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
+		_ply = stoi(str);
 
 
-	// move
-	str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
-	_move = stoi(str);
+		// move
+		str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
+		_move = stoi(str);
+	}
 }
 
 void Board::ChangeTurn()

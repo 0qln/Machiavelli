@@ -18,7 +18,6 @@ private:
 
 
 public:
-
 	MoveGen(Board* b);
 
 	/// <summary>
@@ -28,6 +27,7 @@ public:
 	/// <returns>The Node count up to the `depth`</returns>
 	int Perft(int dpeth, bool pv);
 
+	int PerftLegal(int depth, bool pv);
 
 	std::vector<Move> GeneratePseudoLegalMoves();
 
