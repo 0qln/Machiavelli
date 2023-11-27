@@ -21,10 +21,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7aa93d49-7dbd-462c-8411-82d3698c5b30}</ProjectGuid>
-    <RootNamespace>Machiavelli</RootNamespace>
+    <ProjectGuid>{a105938a-2d61-4b82-9e60-b386e146967b}</ProjectGuid>
+    <RootNamespace>UCIInterface</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>UCI</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -105,7 +104,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,7 +118,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,26 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BitHelper.cpp" />
-    <ClCompile Include="Board.cpp" />
-    <ClCompile Include="BoardTests.cpp" />
-    <ClCompile Include="Machiavelli.cpp" />
-    <ClCompile Include="Misc.cpp" />
-    <ClCompile Include="Move.cpp" />
-    <ClCompile Include="MoveGen.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BitHelper.h" />
-    <ClInclude Include="Board.h" />
-    <ClInclude Include="BoardTests.h" />
-    <ClInclude Include="Misc.h" />
-    <ClInclude Include="Move.h" />
-    <ClInclude Include="MoveGen.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\dll\dll.vcxproj">
-      <Project>{11177f01-360e-4741-a477-662542dd9df4}</Project>
-    </ProjectReference>
+    <ClCompile Include="UCI-Interface.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

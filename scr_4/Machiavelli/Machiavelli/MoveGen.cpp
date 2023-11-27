@@ -1,13 +1,38 @@
 #include <iostream>
+#include <algorithm>
 
 #include "MoveGen.h"
 #include "BitHelper.h"
 #include "Misc.h"
 #include "Move.h"
 
+
+
 MoveGen::MoveGen(Board* b)
 {
 	_board = b;
+}
+
+
+int MoveGen::PerftLegal(int depth, bool pv)
+{
+	if (depth == 0)
+		return 1;
+
+	unsigned long long moveCount = 0;
+	auto movelist = GenerateLegalMoves();
+	for (int i = 0; i < movelist.size(); i++) {
+		_board->MakeMove(&movelist[i]);
+		int count = PerftLegal(depth - 1, false);
+		if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+		moveCount += count;
+		_board->UndoMove(&movelist[i]);
+	}
+
+	if (pv) {
+		std::cout << moveCount << '\n';
+	}
+	return moveCount;
 }
 
 int MoveGen::Perft(int depth, bool pv)
@@ -133,10 +158,10 @@ void MoveGen::GeneratePseudoLegalPawnMoves(const Square idx, Color us, std::vect
 	}
 
 	// En passant
-	_ASSERT(captureRightIdx != -1); 
-	_ASSERT(captureLeftIdx != -1);
-	if ((fileIdx < 7 && (_board->GetEnPassantSquare() == captureRightIdx)) ||	// right
-		(fileIdx > 0 && (_board->GetEnPassantSquare() == captureLeftIdx))) {	// left
+	auto enpassantSqr = _board->GetEnPassantSquare();
+	if ((fileIdx < 7 && (enpassantSqr == captureRightIdx)) ||	// right
+		(fileIdx > 0 && (enpassantSqr == captureLeftIdx))		// left
+		&& enpassantSqr >= 0) {	
 		movelist->push_back(MoveHelper::Create(idx, _board->GetEnPassantSquare(), MoveHelper::EN_PASSANT_FLAG));
 	}
 }
@@ -362,24 +387,18 @@ void MoveGen::GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vect
 
 std::vector<Move> MoveGen::GenerateLegalMoves()
 {
-	return std::vector<Move>();
+	auto pseudoLegal = GeneratePseudoLegalMoves();
+	auto legal = std::vector<Move>::vector();
+
+	std::copy_if(pseudoLegal.begin(), pseudoLegal.end(), std::back_inserter(legal), [=](Move move) {
+		bool isLegal = true;
+		_board->MakeMove(&move, false);
+		if (_board->IsInCheck()) {
+			isLegal = false;
+		}
+		_board->UndoMove(&move, false);
+		return isLegal;
+	});
+
+	return legal;
 }
-
-
-
-
-//
-//
-//std::vector<Move> MoveGen::GenerateLegalMoves()
-//{	
-//	Color us = _board->GetTurn();
-//	auto pieces = _board->GetColorBitboard(us);
-//	std::vector<Move> movelist = std::vector<Move>::vector<Move>();
-//
-//	auto square = Square(-1);
-//	while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
-//		GenerateLegalMoves(&movelist, square, us);
-//	}
-//
-//	return movelist;
-//}
