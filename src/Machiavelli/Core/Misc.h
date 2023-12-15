@@ -5,17 +5,32 @@
 
 namespace Machiavelli
 {
+	/// <summary>
+	/// <para>64-bit Bitboard</para>
+	/// https://www.chessprogramming.org/Bitboards
+	/// </summary>
 	using Bitboard = unsigned __int64;
 
-	enum Color {
+	/// <summary>
+	/// <para>Side-to-move and Piece color</para>
+	/// <para>White = 0</para>
+	/// <para>Black = 1</para>
+	/// </summary>
+	enum Color : bool {
 		White, Black
 	};
 
-	enum Depth {
+	/// <summary>
+	/// Search depth
+	/// </summary>
+	enum Depth : int {
 		NONE = 0,
 		MAX = 255,
 	};
 
+	/// <summary>
+	/// Compass rose the work with directions
+	/// </summary>
 	enum CompassRose : int {
 		Zero,
 
@@ -30,8 +45,14 @@ namespace Machiavelli
 		SoEa = Sout + East,
 	};
 
+	/// <summary>
+	/// Evaluation score for game tree branches
+	/// </summary>
 	using Score = __int32;
 
+	/// <summary>
+	/// Piece type order; compatible with <see cref="Piece"/> and useful for indexing
+	/// </summary>
 	enum PieceType : int {
 		PT_NULL = 0,
 		Pawn = 1,
@@ -56,8 +77,10 @@ namespace Machiavelli
 	using File = int;
 	enum FileTable : File { A, B, C, D, E, F, G, H };
 	using Rank = int;
-	enum RankTable : Rank { };
 
+	/// <summary>
+	/// Piece ordering and masks, compatible with <see cref="PieceType"/> and <see cref="Color"/>
+	/// </summary>
 	enum Piece : int {
 		WhiteNULL = 0,
 		BlackNULL = 1,
@@ -65,25 +88,32 @@ namespace Machiavelli
 		ColorMask = 1,
 		TypeMask = ~ColorMask,
 
-		BlackPawn = Black | (Pawn << 1),
+		BlackPawn	= Black | (Pawn << 1),
 		BlackKnight = Black | (Knight << 1),
 		BlackBishop = Black | (Bishop << 1),
-		BlackRook = Black | (Rook << 1),
-		BlackQueen = Black | (Queen << 1),
-		BlackKing = Black | (King << 1),
+		BlackRook	= Black | (Rook << 1),
+		BlackQueen	= Black | (Queen << 1),
+		BlackKing	= Black | (King << 1),
 
-		WhitePawn = White | (Pawn << 1),
+		WhitePawn	= White | (Pawn << 1),
 		WhiteKnight = White | (Knight << 1),
 		WhiteBishop = White | (Bishop << 1),
-		WhiteRook = White | (Rook << 1),
-		WhiteQueen = White | (Queen << 1),
-		WhiteKing = White | (King << 1),
+		WhiteRook	= White | (Rook << 1),
+		WhiteQueen	= White | (Queen << 1),
+		WhiteKing	= White | (King << 1),
 	};
 
-
+	/// <summary>
+	/// <para>Representation of a move</para>
+	/// <para>First 4 bits: Flags for additional info</para>
+	/// <para>Next 6 bits: To-Square index</para>
+	/// <para>Next 6 bits: From-Square index</para>
+	/// </summary>
 	using Move = unsigned __int16;
 
-
+	/// <summary>
+	/// Utils
+	/// </summary>
 	class Misc
 	{
 	public:
