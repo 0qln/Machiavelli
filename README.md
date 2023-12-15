@@ -1,2 +1,2 @@
 # Machiavelli
- A chess engine
+A UCI compliant chess engine
