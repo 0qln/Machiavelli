@@ -5,27 +5,50 @@
 
 namespace Machiavelli
 {
+	/// <summary>
+	/// A util class to help working with the move representation 
+	/// </summary>
 	class MoveHelper
 	{
 	public:
-		using Flag = unsigned int;
-		using Shift = unsigned int;
-		using Mask = unsigned short;
+		/// <summary>
+		/// A move flag is represented by a nibble (4 bits)
+		/// </summary>
+		using Flag = unsigned __int8;
 
+		/// <summary>
+		/// Shifting the parts of the move
+		/// </summary>
+		using Shift = int;
+
+		/// <summary>
+		/// A mask of the move requires atleast 16 bits (size of `Move`) 
+		/// </summary>
+		using Mask = unsigned __int16;
+
+		/// <summary>
+		/// Shifting constants
+		/// </summary>
 		enum Shifts : Shift {
 			FROM_SHIFT = 0,
 			TO_SHIFT = 6,
 			FLAG_SHIFT = 12
 		};
 
+		/// <summary>
+		/// Bit mask constants
+		/// </summary>
 		enum Masks : Mask {
-			FROM_MASK = 0b111111 << Shifts::FROM_SHIFT,
-			TO_MASK = 0b111111 << Shifts::TO_SHIFT,
-			FLAG_MASK = 0b1111 << Shifts::FLAG_SHIFT
+			FROM_MASK	= 0b111111 << Shifts::FROM_SHIFT,
+			TO_MASK		= 0b111111 << Shifts::TO_SHIFT,
+			FLAG_MASK	= 0b1111 << Shifts::FLAG_SHIFT
 		};
 
+		/// <summary>
+		/// Flag constants
+		/// </summary>
 		enum Flags : Flag {
-			QUIET_MOVE_FLAG,
+			QUIET_MOVE_FLAG	,
 			DOUBLE_PAWN_PUSH_FLAG,
 			PROMOTION_KNIGHT_FLAG,
 			PROMOTION_BISHOP_FLAG,
@@ -41,23 +64,25 @@ namespace Machiavelli
 			EN_PASSANT_FLAG,
 		};
 
+		/// <summary>
+		/// Flag bit mask constants
+		/// </summary>
 		enum FlagMasks : Mask {
-			QUIET_MOVE_MASK = Flags::QUIET_MOVE_FLAG << Shifts::FLAG_SHIFT,
-			DOUBLE_PAWN_PUSH_MASK = Flags::DOUBLE_PAWN_PUSH_FLAG << Shifts::FLAG_SHIFT,
-			KING_CASTLE_MASK = Flags::KING_CASTLE_FLAG << Shifts::FLAG_SHIFT,
-			QUEEN_CASTLE_MASK = Flags::QUEEN_CASTLE_FLAG << Shifts::FLAG_SHIFT,
-			CAPTURE_MASK = Flags::CAPTURE_FLAG << Shifts::FLAG_SHIFT,
-			EN_PASSANT_MASK = Flags::EN_PASSANT_FLAG << Shifts::FLAG_SHIFT,
-			PROMOTION_KNIGHT_MASK = Flags::PROMOTION_KNIGHT_FLAG << Shifts::FLAG_SHIFT,
-			PROMOTION_BISHOP_MASK = Flags::PROMOTION_BISHOP_FLAG << Shifts::FLAG_SHIFT,
-			PROMOTION_ROOK_MASK = Flags::PROMOTION_ROOK_FLAG << Shifts::FLAG_SHIFT,
-			PROMOTION_QUEEN_MASK = Flags::PROMOTION_QUEEN_FLAG << Shifts::FLAG_SHIFT,
-			CAPTURE_PROMOTION_KNIGHT_MASK = Flags::CAPTURE_PROMOTION_KNIGHT_FLAG << Shifts::FLAG_SHIFT,
-			CAPTURE_PROMOTION_BISHOP_MASK = Flags::CAPTURE_PROMOTION_BISHOP_FLAG << Shifts::FLAG_SHIFT,
-			CAPTURE_PROMOTION_ROOK_MASK = Flags::CAPTURE_PROMOTION_ROOK_FLAG << Shifts::FLAG_SHIFT,
-			CAPTURE_PROMOTION_QUEEN_MASK = Flags::CAPTURE_PROMOTION_QUEEN_FLAG << Shifts::FLAG_SHIFT
+			QUIET_MOVE_MASK					= Flags::QUIET_MOVE_FLAG				<< Shifts::FLAG_SHIFT,
+			DOUBLE_PAWN_PUSH_MASK			= Flags::DOUBLE_PAWN_PUSH_FLAG			<< Shifts::FLAG_SHIFT,
+			KING_CASTLE_MASK				= Flags::KING_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
+			QUEEN_CASTLE_MASK				= Flags::QUEEN_CASTLE_FLAG				<< Shifts::FLAG_SHIFT,
+			CAPTURE_MASK					= Flags::CAPTURE_FLAG					<< Shifts::FLAG_SHIFT,
+			EN_PASSANT_MASK					= Flags::EN_PASSANT_FLAG				<< Shifts::FLAG_SHIFT,
+			PROMOTION_KNIGHT_MASK			= Flags::PROMOTION_KNIGHT_FLAG			<< Shifts::FLAG_SHIFT,
+			PROMOTION_BISHOP_MASK			= Flags::PROMOTION_BISHOP_FLAG			<< Shifts::FLAG_SHIFT,
+			PROMOTION_ROOK_MASK				= Flags::PROMOTION_ROOK_FLAG			<< Shifts::FLAG_SHIFT,
+			PROMOTION_QUEEN_MASK			= Flags::PROMOTION_QUEEN_FLAG			<< Shifts::FLAG_SHIFT,
+			CAPTURE_PROMOTION_KNIGHT_MASK	= Flags::CAPTURE_PROMOTION_KNIGHT_FLAG	<< Shifts::FLAG_SHIFT,
+			CAPTURE_PROMOTION_BISHOP_MASK	= Flags::CAPTURE_PROMOTION_BISHOP_FLAG	<< Shifts::FLAG_SHIFT,
+			CAPTURE_PROMOTION_ROOK_MASK		= Flags::CAPTURE_PROMOTION_ROOK_FLAG	<< Shifts::FLAG_SHIFT,
+			CAPTURE_PROMOTION_QUEEN_MASK	= Flags::CAPTURE_PROMOTION_QUEEN_FLAG	<< Shifts::FLAG_SHIFT
 		};
-
 
 
 		static bool IsQuietMove(const Move* move);
@@ -79,12 +104,13 @@ namespace Machiavelli
 		static bool IsBishopPromotion(const Move* move);
 		static bool IsRookPromotion(const Move* move);
 		static bool IsQueenPromotion(const Move* move);
-		static Square GetTo(const Move* move);
-		static Square GetFrom(const Move* move);
-		static Flag GetFlag(const Move* move);
-		static Move Create(const Square from, const Square to, const Flag flag);
-		static Move Create(const std::string str, const Flag flag);
-		static std::string ToString(Move move);
+		
+		static Square GetTo(const Move* move);		
+		static Square GetFrom(const Move* move);		
+		static Flag GetFlag(const Move* move);		
+		static Move Create(const Square from, const Square to, const Flag flag);		
+		static Move Create(const std::string str, const Flag flag);		
+		static std::string ToString(const Move move);
 	};
 
 
