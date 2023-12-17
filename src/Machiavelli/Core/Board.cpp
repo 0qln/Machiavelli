@@ -194,14 +194,14 @@ finish:
 		SetPiece(capturedIdx, capturedPiece);
 		SetPiece(from, movingPiece);
 
-		// Change state
-		PopState();
-
 		// Change turn
 finish:
 		if (changeTurn) {
 			ChangeTurn();
 		}
+
+		// Change state
+		PopState();
 
 		--_ply;
 	}
@@ -376,7 +376,9 @@ finish:
 
 	bool Board::IsInCheck(Color color)
 	{
-		int i = 0;
+		//std::cout << "Board::IsInCheck" << '\n';
+
+		//int i = 0;
 
 		// Go through all lines the enemy can play 
 		for (auto move : MoveGen::MoveGen(this).GeneratePseudoLegalMoves(Color(!color)))
@@ -389,8 +391,22 @@ finish:
 				return true;
 			}
 
+			//if (i == 37) {
+			//	std::cout << MoveHelper::ToString(move) << '\n';
+			//	std::cout << ToString() << '\n';
+			//}
+
 			UndoMove(&move, false);
+
+
+			//if (i == 37) break;
+
+			//i++;
 		}
+		
+		//std::cout << ToString() << '\n';
+
+		//std::cout << "Board::IsInCheck" << '\n';
 
 		return false;
 	}
