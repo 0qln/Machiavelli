@@ -30,6 +30,10 @@ namespace Machiavelli {
 		const int fRankIdx = from / 8;
 		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
 		Piece newP = movingPiece;
+		const Color us = Color(GetPiece(from) & Piece::ColorMask);
+		/*std::cout 
+			<< "Turn: " << us 
+			<< " | Move: " << MoveHelper::ToString(*move) << '\n';*/
 
 		// Remember what happened
 		BoardState newState = BoardState::BoardState();
@@ -49,31 +53,32 @@ namespace Machiavelli {
 		switch (MoveHelper::GetFlag(move))
 		{
 		case MoveHelper::KING_CASTLE_FLAG:
-			SetPiece(fRankIdx + FileTable::E, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::G, Piece((PieceType::King << 1) | _turn));
-			SetPiece(fRankIdx + FileTable::H, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::F, Piece((PieceType::Rook << 1) | _turn));
-			_kingCastle[_turn] = false;
-			return;
+			SetPiece(fRankIdx * 8 + FileTable::E, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8 + FileTable::G, Piece((PieceType::King << 1) | us));
+			SetPiece(fRankIdx * 8 + FileTable::H, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8 + FileTable::F, Piece((PieceType::Rook << 1) | us));
+			_kingCastle[us] = false;
+			goto finish;
 		case MoveHelper::QUEEN_CASTLE_FLAG:
-			SetPiece(fRankIdx + FileTable::E, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::C, Piece((PieceType::King << 1) | _turn));
-			SetPiece(fRankIdx + FileTable::A, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::D, Piece((PieceType::Rook << 1) | _turn));
-			_queenCastle[_turn] = false;
-			return;
+			SetPiece(fRankIdx * 8  + FileTable::E, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8  + FileTable::C, Piece((PieceType::King << 1) | us));
+			SetPiece(fRankIdx * 8  + FileTable::A, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8  + FileTable::D, Piece((PieceType::Rook << 1) | us));
+			_queenCastle[us] = false;
+			goto finish;
 
 		case MoveHelper::EN_PASSANT_FLAG:
 			// give offset to `removeIdx`
-			newState.capturedSquare += (_turn * 2 - 1) * 8;
+			newState.capturedSquare += (us * 2 - 1) * 8;
 			// get capture piece (has to be a pawn)
-			newState.capturedPiece = Piece(!_turn | (PieceType::Pawn << 1));
+			newState.capturedPiece = Piece(!us | (PieceType::Pawn << 1));
 			// clear the square of the pawn that got en passanted
 			SetPiece(newState.capturedSquare, Piece::WhiteNULL);
 			// do the normal capturing procedure:
 			goto capture;
+
 		case MoveHelper::CAPTURE_FLAG:
-		capture:
+capture:
 			// remove the ability to castle when the rooks are captured
 			switch (to)
 			{
@@ -85,7 +90,7 @@ namespace Machiavelli {
 			break;
 
 		case MoveHelper::DOUBLE_PAWN_PUSH_FLAG:
-			SetEnpassant(to + (_turn * 2 - 1) * 8);
+			SetEnpassant(to + (us * 2 - 1) * 8);
 			break;
 
 			// Swap out piece on promotion
@@ -93,13 +98,13 @@ namespace Machiavelli {
 		case MoveHelper::PROMOTION_BISHOP_FLAG:
 		case MoveHelper::PROMOTION_ROOK_FLAG:
 		case MoveHelper::PROMOTION_QUEEN_FLAG:
-			newP = Piece((flag << 1) | _turn);
+			newP = Piece((flag << 1) | us);
 			break;
 		case MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG:
 		case MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG:
 		case MoveHelper::CAPTURE_PROMOTION_ROOK_FLAG:
 		case MoveHelper::CAPTURE_PROMOTION_QUEEN_FLAG:
-			newP = Piece((flag - 4 << 1) | _turn);
+			newP = Piece((flag - 4 << 1) | us);
 			goto capture;
 		}
 
@@ -114,17 +119,15 @@ namespace Machiavelli {
 			}
 		}
 		else if (movingPiece >> 1 == PieceType::King) {
-			_queenCastle[_turn] = false;
-			_kingCastle[_turn] = false;
+			_queenCastle[us] = false;
+			_kingCastle[us] = false;
 		}
 
 		// move the piece
 		SetPiece(from, Piece::WhiteNULL);
 		SetPiece(to, newP);
 
-		// update check vars
-		//MoveGen generator = MoveGen::MoveGen(this);
-
+finish:
 		// change turn
 		if (changeTurn) {
 			ChangeTurn();
@@ -141,23 +144,24 @@ namespace Machiavelli {
 		Piece capturedPiece = _currentState.capturedPiece;
 		Square capturedIdx = to;
 		const int fRankIdx = from / 8;
+		const Color us = Color(GetPiece(to) & Piece::ColorMask);
 
 		switch (MoveHelper::GetFlag(move))
 		{
 		case MoveHelper::KING_CASTLE_FLAG:
-			SetPiece(fRankIdx + FileTable::G, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::E, Piece((PieceType::King << 1) | _turn));
-			SetPiece(fRankIdx + FileTable::F, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::H, Piece((PieceType::Rook << 1) | _turn));
-			_kingCastle[_turn] = true;
-			return;
+			SetPiece(fRankIdx * 8 + FileTable::G, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8 + FileTable::E, Piece((PieceType::King << 1) | us));
+			SetPiece(fRankIdx * 8 + FileTable::F, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8 + FileTable::H, Piece((PieceType::Rook << 1) | us));
+			_kingCastle[us] = true;
+			goto finish;
 		case MoveHelper::QUEEN_CASTLE_FLAG:
-			SetPiece(fRankIdx + FileTable::C, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::E, Piece((PieceType::King << 1) | _turn));
-			SetPiece(fRankIdx + FileTable::D, Piece::WhiteNULL);
-			SetPiece(fRankIdx + FileTable::A, Piece((PieceType::Rook << 1) | _turn));
-			_queenCastle[_turn] = true;
-			return;
+			SetPiece(fRankIdx * 8  + FileTable::C, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8  + FileTable::E, Piece((PieceType::King << 1) | us));
+			SetPiece(fRankIdx * 8  + FileTable::D, Piece::WhiteNULL);
+			SetPiece(fRankIdx * 8  + FileTable::A, Piece((PieceType::Rook << 1) | us));
+			_queenCastle[us] = true;
+			goto finish;
 
 		case MoveHelper::CAPTURE_PROMOTION_QUEEN_FLAG:
 		case MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG:
@@ -167,16 +171,16 @@ namespace Machiavelli {
 		case MoveHelper::PROMOTION_KNIGHT_FLAG:
 		case MoveHelper::PROMOTION_ROOK_FLAG:
 		case MoveHelper::PROMOTION_BISHOP_FLAG:
-			movingPiece = Piece(_turn | (PieceType::Pawn << 1));
+			movingPiece = Piece(us | (PieceType::Pawn << 1));
 			break;
 
 		case MoveHelper::EN_PASSANT_FLAG:
-			capturedPiece = Piece(!_turn | (PieceType::Pawn << 1));
-			capturedIdx = to + (_turn * 2 - 1) * 8;
+			capturedPiece = Piece(!us | (PieceType::Pawn << 1));
+			capturedIdx = to + (us * 2 - 1) * 8;
 			break;
 
 		case MoveHelper::DOUBLE_PAWN_PUSH_FLAG:
-			SetEnpassant(to + (_turn * 2 - 1) * 8);
+			SetEnpassant(to + (us * 2 - 1) * 8);
 		}
 
 		// castling rights
@@ -194,6 +198,7 @@ namespace Machiavelli {
 		PopState();
 
 		// Change turn
+finish:
 		if (changeTurn) {
 			ChangeTurn();
 		}
@@ -249,7 +254,7 @@ namespace Machiavelli {
 	{
 		std::stringstream ss;
 
-		ss << "   _______________\n";
+		//ss << "   _______________\n";
 		for (Rank rank = 7; rank >= 0; rank--) {
 			ss << rank + 1 << "  ";
 
@@ -267,7 +272,7 @@ namespace Machiavelli {
 
 			ss << "\n";
 		}
-		ss << "   " << "a b c d e f g h\n";
+		ss << "   " << "a b c d e f g h" << "\n";
 
 		return ss.str();
 	}
@@ -371,25 +376,23 @@ namespace Machiavelli {
 
 	bool Board::IsInCheck(Color color)
 	{
-		bool ret = false;
+		int i = 0;
 
-		ChangeTurn();
-		auto plMoves = MoveGen::MoveGen(this).GeneratePseudoLegalMoves();
-		ChangeTurn();
-
-		for (auto move : plMoves)
+		// Go through all lines the enemy can play 
+		for (auto move : MoveGen::MoveGen(this).GeneratePseudoLegalMoves(Color(!color)))
 		{
 			MakeMove(&move, false);
 
-			//std::cout << ToString() << "\n";
-
-			if (BitHelper::CountBits(GetPieceBitboard(PieceType::King) & GetColorBitboard(color)) == 0) {
-				ret = true;
-				//std::cout << "check" << '\n';
+			// If the king was taken in some line, the site must've been in check
+			if (!BitHelper::CountBits(GetPieceBitboard(PieceType::King) & GetColorBitboard(color))) {
+				UndoMove(&move, false);
+				return true;
 			}
+
 			UndoMove(&move, false);
 		}
-		return ret;
+
+		return false;
 	}
 
 	Bitboard Board::GetCheckBlockades()
@@ -425,18 +428,18 @@ namespace Machiavelli {
 		// Set up pieces
 		Square squareIdx = 63;
 		for (int fenIdx = parts[0]; fenIdx < parts[1]; fenIdx++) {
-			/// skip slashes
+			// skip slashes
 			if (fen.at(fenIdx) == '/') {
 				continue;
 			}
 
-			/// handle digit
+			// handle digit
 			if (isdigit(fen.at(fenIdx))) {
 				squareIdx -= fen.at(fenIdx) - '0';
 				continue;
 			}
 
-			/// get piece char as Piece Type
+			// get piece char as Piece Type
 			Piece p = Piece::WhiteNULL;
 			for (auto& i : PieceChars) {
 				if (i.second == fen.at(fenIdx)) {
@@ -445,7 +448,7 @@ namespace Machiavelli {
 				}
 			}
 
-			/// evaluate
+			// evaluate
 			int idx = squareIdx ^ 7;
 			SetPiece(idx, p);
 

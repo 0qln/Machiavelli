@@ -22,16 +22,10 @@ namespace Machiavelli {
 	public:
 		MoveGen(Board* b);
 
-		/// <summary>
-		/// Performance test
-		/// </summary>
-		/// <param name="dpeth">Maximum depth</param>
-		/// <returns>The Node count up to the `depth`</returns>
 		int Perft(int dpeth, bool pv);
 
-		int PerftLegal(int depth, bool pv);
-
 		std::vector<Move> GeneratePseudoLegalMoves();
+		std::vector<Move> GeneratePseudoLegalMoves(Color c);
 
 		void GeneratePseudoLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GeneratePseudoLegalKnightMoves(const Square idx, Color us, std::vector<Move>* movelist);

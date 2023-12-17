@@ -17,7 +17,7 @@ namespace Machiavelli {
 	}
 
 
-	int MoveGen::PerftLegal(int depth, bool pv)
+	int MoveGen::Perft(int depth, bool pv)
 	{
 		if (depth == 0)
 			return 1;
@@ -26,46 +26,33 @@ namespace Machiavelli {
 		auto movelist = GenerateLegalMoves();
 		for (int i = 0; i < movelist.size(); i++) {
 			_board->MakeMove(&movelist[i]);
-			int count = PerftLegal(depth - 1, false);
-			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
-			moveCount += count;
-			_board->UndoMove(&movelist[i]);
-		}
 
-		if (pv) {
-			std::cout << moveCount << '\n';
-		}
-		return moveCount;
-	}
+			//std::cout << _board->ToString() << '\n';
+			//std::cout << MoveHelper::ToString(movelist[i]) << "\n";
 
-	int MoveGen::Perft(int depth, bool pv)
-	{
-		if (depth == 0)
-			return 1;
+			int count = Perft(depth - 1, false);			
 
-		unsigned long long moveCount = 0;
-		auto movelist = GeneratePseudoLegalMoves();
-		for (int i = 0; i < movelist.size(); i++) {
-			_board->MakeMove(&movelist[i]);
-			//if (pv) std::cout << _board->ToString() << "\n";
-
-			int count = Perft(depth - 1, false);
-			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n"; 
 
 			moveCount += count;
 			_board->UndoMove(&movelist[i]);
 		}
 
 		if (pv) {
-			std::cout << moveCount << '\n';
+			std::cout << "Nodes searched: " << moveCount << '\n';
 		}
+
 		return moveCount;
 	}
 
 	std::vector<Move> MoveGen::GeneratePseudoLegalMoves()
 	{
-		Color us = _board->GetTurn();
-		auto pieces = _board->GetColorBitboard(us);
+		return GeneratePseudoLegalMoves(_board->GetTurn());
+	}
+
+	std::vector<Move> MoveGen::GeneratePseudoLegalMoves(Color c)
+	{
+		auto pieces = _board->GetColorBitboard(c);
 		std::vector<Move> movelist = std::vector<Move>::vector();
 
 		auto square = Square(-1);
@@ -73,12 +60,12 @@ namespace Machiavelli {
 			switch (PieceType((_board->GetPiece(square) & Piece::TypeMask) >> 1))
 			{
 			default: break; // this should be impossible
-			case Pawn: GeneratePseudoLegalPawnMoves(square, us, &movelist); break;
-			case Knight: GeneratePseudoLegalKnightMoves(square, us, &movelist); break;
-			case Bishop: GeneratePseudoLegalBishopMoves(square, us, &movelist); break;
-			case Rook: GeneratePseudoLegalRookMoves(square, us, &movelist); break;
-			case Queen: GeneratePseudoLegalQueenMoves(square, us, &movelist); break;
-			case King: GeneratePseudoLegalKingMoves(square, us, &movelist); break;
+			case Pawn: GeneratePseudoLegalPawnMoves(square, c, &movelist); break;
+			case Knight: GeneratePseudoLegalKnightMoves(square, c, &movelist); break;
+			case Bishop: GeneratePseudoLegalBishopMoves(square, c, &movelist); break;
+			case Rook: GeneratePseudoLegalRookMoves(square, c, &movelist); break;
+			case Queen: GeneratePseudoLegalQueenMoves(square, c, &movelist); break;
+			case King: GeneratePseudoLegalKingMoves(square, c, &movelist); break;
 			}
 		}
 
@@ -213,7 +200,6 @@ namespace Machiavelli {
 			if (fileIdx < 6) addMove(idx - 6);
 		}
 	}
-
 
 	void MoveGen::GeneratePseudoLegalBishopMoves(const Square idx, Color us, std::vector<Move>* movelist)
 	{
@@ -350,16 +336,12 @@ namespace Machiavelli {
 		Bitboard moves, attacks, result;
 
 		auto ranks = RankMask[rankIdx];
-		if (rankIdx < 7)
-			ranks |= RankMask[rankIdx + 1];
-		if (rankIdx > 0)
-			ranks |= RankMask[rankIdx - 1];
+		if (rankIdx < 7) ranks |= RankMask[rankIdx + 1];
+		if (rankIdx > 0) ranks |= RankMask[rankIdx - 1];
 
 		auto files = FileMask[fileIdx];
-		if (fileIdx < 7)
-			files |= FileMask[fileIdx + 1];
-		if (fileIdx > 0)
-			files |= FileMask[fileIdx - 1];
+		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
+		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
 
 
 		// Exclude allies and the king himself
@@ -390,20 +372,15 @@ namespace Machiavelli {
 
 	std::vector<Move> MoveGen::GenerateLegalMoves()
 	{
-		auto pseudoLegal = GeneratePseudoLegalMoves();
-		auto legal = std::vector<Move>::vector();
+		std::vector<Move> legals;
 
-		std::copy_if(pseudoLegal.begin(), pseudoLegal.end(), std::back_inserter(legal), [=](Move move) {
-			bool isLegal = true;
+		for (auto move : GeneratePseudoLegalMoves()) {
 			_board->MakeMove(&move, false);
-			if (_board->IsInCheck()) {
-				isLegal = false;
-			}
+			if (!_board->IsInCheck()) legals.push_back(move);
 			_board->UndoMove(&move, false);
-			return isLegal;
-			});
+		}
 
-		return legal;
+		return legals;
 	}
 
 }
