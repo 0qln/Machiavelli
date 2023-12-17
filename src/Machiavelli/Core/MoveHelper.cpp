@@ -224,7 +224,7 @@ namespace Machiavelli {
     }
 
     /// <summary>
-    /// 
+    /// Convert a move to algebraic notation.
     /// </summary>
     /// <param name="move">The move to be converted</param>
     /// <returns></returns>
