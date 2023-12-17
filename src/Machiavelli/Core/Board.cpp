@@ -108,6 +108,12 @@ capture:
 			goto capture;
 		}
 
+		// move the piece
+		SetPiece(from, Piece::WhiteNULL);
+		SetPiece(to, newP);
+
+
+finish:
 		// remove castling rights on movement of the rook or king
 		if (movingPiece >> 1 == PieceType::Rook) {
 			switch (from)
@@ -121,13 +127,9 @@ capture:
 		else if (movingPiece >> 1 == PieceType::King) {
 			_queenCastle[us] = false;
 			_kingCastle[us] = false;
+			//std::cout << "remove castle rights" << '\n';
 		}
 
-		// move the piece
-		SetPiece(from, Piece::WhiteNULL);
-		SetPiece(to, newP);
-
-finish:
 		// change turn
 		if (changeTurn) {
 			ChangeTurn();
@@ -331,6 +333,17 @@ finish:
 	void Board::PrintPieceBitboard(Piece p)
 	{
 		PrintPieceBitboard(PieceType(p >> 1), Color(p & Piece::ColorMask));
+	}
+
+	Bitboard Board::GetAttacks(Color color)
+	{
+		auto pieces = GetColorBitboard(color);
+		auto result = Bitboard();
+		auto square = Square();
+		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+			result |= MoveGen::MoveGen(this).GenerateAttacks(square, color);
+		}
+		return result;
 	}
 
 	bool Board::GetCastlingRights(Color color, bool kingSide)

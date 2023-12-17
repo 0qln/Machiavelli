@@ -234,6 +234,9 @@ namespace Machiavelli {
         auto from = Misc::FromSquareIndex(fromSqr);
         auto to = Misc::FromSquareIndex(toSqr);
         from.append(to);
+        from.append("-");
+        from.append(std::to_string(int(GetFlag(&move))));
+        if (GetFlag(&move) < 10) from.append(" "); // right pad
         return from;
     }
 }

@@ -26,14 +26,8 @@ namespace Machiavelli {
 		auto movelist = GenerateLegalMoves();
 		for (int i = 0; i < movelist.size(); i++) {
 			_board->MakeMove(&movelist[i]);
-
-			//std::cout << _board->ToString() << '\n';
-			//std::cout << MoveHelper::ToString(movelist[i]) << "\n";
-
-			int count = Perft(depth - 1, false);			
-
-			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n"; 
-
+			int count = Perft(depth - 1, false);
+			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
 			moveCount += count;
 			_board->UndoMove(&movelist[i]);
 		}
@@ -59,7 +53,8 @@ namespace Machiavelli {
 		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
 			switch (PieceType((_board->GetPiece(square) & Piece::TypeMask) >> 1))
 			{
-			default: break; // this should be impossible
+			default: throw std::invalid_argument("Invalid piece type");
+			case PT_NULL: break;
 			case Pawn: GeneratePseudoLegalPawnMoves(square, c, &movelist); break;
 			case Knight: GeneratePseudoLegalKnightMoves(square, c, &movelist); break;
 			case Bishop: GeneratePseudoLegalBishopMoves(square, c, &movelist); break;
@@ -70,6 +65,21 @@ namespace Machiavelli {
 		}
 
 		return movelist;
+	}
+
+	Bitboard MoveGen::GenerateAttacks(const Square idx, Color us)
+	{
+		switch (PieceType((_board->GetPiece(idx) & Piece::TypeMask) >> 1))
+		{
+		default: throw std::invalid_argument("Invalid piece type.");
+		case PT_NULL: return Bitboard(0);
+		case Pawn: return GeneratePawnAttacks(idx, us);
+		case Knight: return GenerateKnightAttacks(idx, us);
+		case Bishop: return GenerateBishopAttacks(idx, us);
+		case Rook: return GenerateRookAttacks(idx, us);
+		case Queen: return GenerateQueenAttacks(idx, us);
+		case King:return  GenerateKingAttacks(idx, us);
+		}
 	}
 
 	void MoveGen::GeneratePseudoLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist) {
@@ -156,6 +166,34 @@ namespace Machiavelli {
 		}
 	}
 
+	Bitboard MoveGen::GeneratePawnAttacks(const Square idx, Color us)
+	{
+		Bitboard result = 0ULL;
+		const Square fileIdx = idx % 8;
+		const Square captureLeftIdx = idx + (us == Color::White ? 7 : -9);
+		const Square captureRightIdx = idx + (us == Color::White ? 9 : -7);
+
+		// Capture left 
+		if (fileIdx > 0) {
+			result |= 1ULL << captureLeftIdx;
+		}
+
+		// Capture right
+		if (fileIdx < 7) {
+			result |= 1ULL << captureRightIdx;
+		}
+
+		// En passant
+		auto enpassantSqr = _board->GetEnPassantSquare();
+		if ((fileIdx < 7 && (enpassantSqr == captureRightIdx)) ||	// right
+			(fileIdx > 0 && (enpassantSqr == captureLeftIdx))		// left
+			&& enpassantSqr >= 0) { // en passant possible?
+			result |= 1ULL << enpassantSqr;
+		}
+
+		return result;
+	}
+
 	void MoveGen::GeneratePseudoLegalKnightMoves(const Square idx, Color us, std::vector<Move>* movelist)
 	{
 		auto rankIdx = idx / 8;
@@ -168,7 +206,7 @@ namespace Machiavelli {
 			if (!(friends & sqmk)) {
 				movelist->push_back(MoveHelper::Create(idx, nidx, enemies & sqmk ? MoveHelper::CAPTURE_FLAG : MoveHelper::QUIET_MOVE_FLAG));
 			}
-			};
+		};
 
 		// Include typical squares
 		// upper
@@ -199,6 +237,45 @@ namespace Machiavelli {
 			// righter
 			if (fileIdx < 6) addMove(idx - 6);
 		}
+	}
+
+	Bitboard MoveGen::GenerateKnightAttacks(const Square idx, Color us)
+	{
+		const auto rankIdx = idx / 8;
+		const auto fileIdx = idx % 8;
+		Bitboard result = Bitboard();
+
+		// Include typical squares
+		// upper
+		if (rankIdx < 6) {
+			// right 
+			if (fileIdx < 7) result |= 1ULL << 17 + idx;
+			// left
+			if (fileIdx > 0) result |= 1ULL << 15 + idx;
+		}
+		// up
+		if (rankIdx < 7) {
+			// righter
+			if (fileIdx < 6) result |= 1ULL << 10 + idx;
+			// lefter
+			if (fileIdx > 1) result |= 1ULL << 6 + idx;
+		}
+		// lower
+		if (rankIdx > 1) {
+			// left
+			if (fileIdx > 0) result |= 1ULL << idx - 17;
+			// right
+			if (fileIdx < 7) result |= 1ULL << idx - 15;
+		}
+		// low
+		if (rankIdx > 0) {
+			// lefter
+			if (fileIdx > 1) result |= 1ULL << idx - 10;
+			// righter
+			if (fileIdx < 6) result |= 1ULL << idx - 6;
+		}
+
+		return result;
 	}
 
 	void MoveGen::GeneratePseudoLegalBishopMoves(const Square idx, Color us, std::vector<Move>* movelist)
@@ -263,6 +340,56 @@ namespace Machiavelli {
 		return result;
 	}
 
+	Bitboard MoveGen::GenerateBishopAttacks(const Square idx, Color us)
+	{
+		Color nus = Color(!us);
+
+		Bitboard result = 0LL;
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+		Bitboard self = 1ULL << idx;
+
+		auto diag1Idx = 7 - rankIdx + fileIdx;
+		Bitboard diag1 = DiagMask1[diag1Idx];
+
+		auto diag2Idx = rankIdx + fileIdx;
+		Bitboard diag2 = DiagMask2[diag2Idx];
+
+		Bitboard bMask, wMask, square;
+
+		Bitboard selfDivisorDown = ~BitHelper::FromIndex(idx);
+		BitHelper::DeactivateBit(&selfDivisorDown, &idx);
+
+		Bitboard selfDivisorUp = BitHelper::FromIndex(idx);
+		BitHelper::DeactivateBit(&selfDivisorUp, &idx);
+
+		// -< Bottom Left >- 
+		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorDown;
+		wMask = _board->GetColorBitboard(us) & (diag1 & selfDivisorDown | self);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & diag1 & selfDivisorDown;
+		result |= square;
+
+		// -< Up Right >-
+		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorUp;
+		wMask = _board->GetColorBitboard(us) & (diag1 & selfDivisorUp | self);
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & diag1 & selfDivisorUp;
+		result |= square;
+
+		// -< Bottom Right >-
+		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorDown;
+		wMask = _board->GetColorBitboard(us) & (diag2 & selfDivisorDown | self);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & diag2 & selfDivisorDown;
+		result |= square;
+
+		// -< Up Left >-
+		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorUp;
+		wMask = _board->GetColorBitboard(us) & (diag2 & selfDivisorUp | self);
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & diag2 & selfDivisorUp;
+		result |= square;
+
+		return result;
+	}
+
 	void MoveGen::GeneratePseudoLegalRookMoves(const Square idx, Color us, std::vector<Move>* movelist)
 	{
 		Color nus = Color(!us);
@@ -319,10 +446,59 @@ namespace Machiavelli {
 		return result;
 	}
 
+	Bitboard MoveGen::GenerateRookAttacks(const Square idx, Color us)
+	{
+		Color nus = Color(!us);
+
+		Bitboard result = 0;
+		Bitboard rank = RankMask[idx / 8];
+		Bitboard file = FileMask[idx % 8];
+		Bitboard rookSquare = 1ULL << idx;
+
+		Bitboard selfDivisorDown = ~BitHelper::FromIndex(idx);
+		BitHelper::DeactivateBit(&selfDivisorDown, &idx);
+
+		Bitboard selfDivisorUp = BitHelper::FromIndex(idx);
+		BitHelper::DeactivateBit(&selfDivisorUp, &idx);
+
+		Bitboard bMask, wMask, square;
+
+		// -< Down >-
+		bMask = _board->GetColorBitboard(nus) & file & selfDivisorDown;
+		wMask = _board->GetColorBitboard(us) & (file & selfDivisorDown | rookSquare);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & file & selfDivisorDown;
+		result |= square;
+
+		// -< Up >- 
+		bMask = _board->GetColorBitboard(nus) & file & selfDivisorUp;
+		wMask = _board->GetColorBitboard(us) & (file & selfDivisorUp | rookSquare);
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & file & selfDivisorUp;
+		result |= square;
+
+		// -< Left >-
+		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorDown;
+		wMask = _board->GetColorBitboard(us) & (rank & selfDivisorDown | rookSquare);
+		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & rank & selfDivisorDown;
+		result |= square;
+
+		// -< Right >-
+		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorUp;
+		wMask = _board->GetColorBitboard(us) & (rank & selfDivisorUp | rookSquare);
+		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & rank & selfDivisorUp;
+		result |= square;
+
+		return result;
+	}
+
 	void MoveGen::GeneratePseudoLegalQueenMoves(const Square idx, Color us, std::vector<Move>* movelist)
 	{
 		GeneratePseudoLegalBishopMoves(idx, us, movelist);
 		GeneratePseudoLegalRookMoves(idx, us, movelist);
+	}
+
+	Bitboard MoveGen::GenerateQueenAttacks(const Square idx, Color us)
+	{
+		return GenerateBishopAttacks(idx, us) | GenerateRookAttacks(idx, us);
 	}
 
 	void MoveGen::GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist)
@@ -333,6 +509,7 @@ namespace Machiavelli {
 		Bitboard allies = _board->GetColorBitboard(us);
 		Bitboard enemies = _board->GetColorBitboard(nus);
 		Bitboard pieces = allies | enemies;
+		Bitboard nusAttacks = _board->GetAttacks(nus);
 		Bitboard moves, attacks, result;
 
 		auto ranks = RankMask[rankIdx];
@@ -343,10 +520,9 @@ namespace Machiavelli {
 		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
 		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
 
-
 		// Exclude allies and the king himself
 		result = files & ranks;
-		moves = result ^ (result & allies);
+		moves = result ^ (result & (allies | enemies));
 		attacks = result & enemies;
 
 		// Add bitboard moves
@@ -359,14 +535,30 @@ namespace Machiavelli {
 		}
 
 		// King side castling
-		if (_board->GetCastlingRights(us, true) && !(pieces & 0x60ULL << us * 56)) {
+		if (_board->GetCastlingRights(us, true) && !(pieces | nusAttacks & 0x60ULL << us * 56)) {
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::G), MoveHelper::KING_CASTLE_FLAG));
 		}
 
 		// Queen side castling
-		if (_board->GetCastlingRights(us, false) && !(pieces & 0xEULL << us * 56)) {
+		if (_board->GetCastlingRights(us, false) && !(pieces | nusAttacks & 0xEULL << us * 56)) {
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::C), MoveHelper::QUEEN_CASTLE_FLAG));
 		}
+	}
+
+	Bitboard MoveGen::GenerateKingAttacks(const Square idx, Color us)
+	{
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+
+		auto ranks = RankMask[rankIdx];
+		if (rankIdx < 7) ranks |= RankMask[rankIdx + 1];
+		if (rankIdx > 0) ranks |= RankMask[rankIdx - 1];
+
+		auto files = FileMask[fileIdx];
+		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
+		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
+
+		return (files & ranks) ^ (1ULL << idx);
 	}
 
 

@@ -13,24 +13,25 @@ int main(int argc, char** argv)
 		// Handle UCI input	
 	}
 
-	auto b2 = Machiavelli::Board::Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+	auto b2 = Machiavelli::Board::Board("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1");
 	auto gen2 = Machiavelli::MoveGen::MoveGen(&b2);
+	auto e5g4 = Machiavelli::MoveHelper::Create("e5g4", Machiavelli::MoveHelper::QUIET_MOVE_FLAG);
+	auto h3g2 = Machiavelli::MoveHelper::Create("h3g2", Machiavelli::MoveHelper::CAPTURE_FLAG);
+	auto e5f7 = Machiavelli::MoveHelper::Create("e5f7", Machiavelli::MoveHelper::CAPTURE_FLAG);
+
+
+	//b2.MakeMove(&e5f7);
 
 	std::cout << b2.ToString() << '\n';
-	
-	//std::cout << b2.GetTurn() << '\n';
+	std::cout << b2.ToString(b2.GetAttacks(Machiavelli::Color::White)) << '\n';
 
-	//std::cout << b2.GetCastlingRights(Machiavelli::Color::Black, true) << '\n';
+	gen2.Perft(1, true);
 
-	//gen2.Perft(2, true);
-	//b2.IsInCheck();
-	//auto e8g8 = Machiavelli::MoveHelper::Create("e8g8", Machiavelli::MoveHelper::Flags::KING_CASTLE_FLAG);
-	//b2.MakeMove(&e8g8, false);
-	//std::cout << b2.IsInCheck() << '\n';
+	//std::cout << '\n';
 
-	//std::cout << b2.GetCastlingRights(Machiavelli::Color::Black, true) << '\n';
-
-	gen2.Perft(2, true);
+	//b2.MakeMove(&e5g4, true);
+	//gen2.Perft(1, true);
+	//b2.UndoMove(&e5g4, true);
 
 	//std::cout << b2.ToString() << '\n';
 }

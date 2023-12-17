@@ -89,6 +89,9 @@ namespace Machiavelli
 		};
 
 
+		Bitboard GetAttacks(Color color);
+
+
 		bool GetCastlingRights(Color color, bool kingSide);
 
 
