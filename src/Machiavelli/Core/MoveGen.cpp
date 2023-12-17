@@ -522,7 +522,7 @@ namespace Machiavelli {
 
 		// Exclude allies and the king himself
 		result = files & ranks;
-		moves = result ^ (result & (allies | enemies));
+		moves = result ^ (result & pieces);
 		attacks = result & enemies;
 
 		// Add bitboard moves
