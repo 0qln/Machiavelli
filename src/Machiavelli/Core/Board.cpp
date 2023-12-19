@@ -20,6 +20,12 @@
 #include <string>
 #include <vector>
 
+#define BB_ALLOC(n, s) \
+n = new Bitboard[s]; \
+for (int i = 0; i < s; i++) {\
+	n[i] = 0;\
+}\
+
 
 namespace Machiavelli {
 	void Board::MakeMove(const Move* move, bool changeTurn)
@@ -205,16 +211,6 @@ finish:
 		--_ply;
 	}
 
-	void Board::Clear()
-	{
-		//_checkers = _pinners =
-		_enPassantBitboard = 0;
-		_enPassantSquare = -1;
-		_pieceColors[Color::White] = _pieceColors[Color::Black] = 0;
-		_pieceTypes[PieceType::Pawn] = _pieceTypes[PieceType::Knight] = _pieceTypes[PieceType::Bishop] = _pieceTypes[PieceType::Rook] = _pieceTypes[PieceType::Queen] =
-			_pieceTypes[PieceType::King] = _pieceTypes[PieceType::PT_NULL] = 0;
-	}
-
 	Piece Board::GetPiece(const Square index)
 	{
 		Bitboard b = 1ULL << index;
@@ -297,6 +293,11 @@ finish:
 	{
 		newState->previous = new BoardState(_currentState);
 		_currentState = *newState;
+	}
+
+	void Board::Print()
+	{
+		std::cout << ToString() << '\n';
 	}
 
 	void Board::PrintPieceTypeBitboard(PieceType pt)
@@ -447,11 +448,39 @@ finish:
 		}
 	}
 
-	Board::Board(std::string fen)
+	void Board::Clear()
 	{
 		_currentState = BoardState::BoardState();
 		_currentState.ply = 0;
 		_enPassantSquare = -1;
+		_enPassantBitboard = 0;
+		_kingCastle = new bool[2];
+		_queenCastle = new bool[2];
+		BB_ALLOC(_pieceTypes, 7);
+		BB_ALLOC(_pieceColors, 2);
+	}
+
+	Board::Board() 
+	{
+		Clear();
+	}
+
+	Board::~Board()
+	{
+		delete[] _pieceTypes;
+		delete[] _pieceColors;
+	}
+
+	Board::Board(std::string fen) 
+		: Board()
+	{
+		Print();
+		SetFromFEN(fen);
+	}
+
+	void Board::SetFromFEN(std::string fen) 
+	{
+		Clear ();
 
 		std::string str;
 

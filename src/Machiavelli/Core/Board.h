@@ -19,8 +19,23 @@ namespace Machiavelli
 		Square capturedSquare;
 		Move move;
 		int ply;
-		bool kingCastle[2];
-		bool queenCastle[2];
+		bool* kingCastle;
+		bool* queenCastle;
+
+		BoardState() {
+			queenCastle = new bool[2];
+			kingCastle = new bool[2];
+			ply = 0;
+			move = 0;
+			capturedSquare = 0;
+			capturedPiece = Piece(0);
+			previous = __nullptr;
+		}
+
+		~BoardState() {
+			delete[] kingCastle;
+			delete[] queenCastle;
+		}
 	};
 
 
@@ -34,17 +49,11 @@ namespace Machiavelli
 
 		Color _turn = Color::White;
 
-		bool _kingCastle[2];
-		bool _queenCastle[2];
+		bool* _kingCastle; 
+		bool* _queenCastle;
 
-		// TODO: update this when the board is created
-		bool _isInCheck = false;
-
-		Bitboard _checkers;
-		Bitboard _pinners;
-		Bitboard _attackers[64];
-		Bitboard _pieceTypes[7];
-		Bitboard _pieceColors[2];
+		Bitboard* _pieceTypes;
+		Bitboard* _pieceColors;
 		Bitboard _enPassantBitboard;
 		Square _enPassantSquare;
 
@@ -62,6 +71,7 @@ namespace Machiavelli
 
 	public:
 
+		void Print();
 		void PrintPieceTypeBitboard(PieceType pt);
 		void PrintPieceTypeBitboard(Piece p);
 		void PrintColorBitboard(Color c);
@@ -124,6 +134,11 @@ namespace Machiavelli
 
 		Board(std::string fen);
 
+		void SetFromFEN(std::string fen);
+
+		Board();
+
+		~Board();
 
 		void ChangeTurn();
 
