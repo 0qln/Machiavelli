@@ -31,9 +31,6 @@ namespace Machiavelli {
 		const MoveHelper::Flag flag = MoveHelper::GetFlag(move);
 		Piece newP = movingPiece;
 		const Color us = Color(GetPiece(from) & Piece::ColorMask);
-		/*std::cout 
-			<< "Turn: " << us 
-			<< " | Move: " << MoveHelper::ToString(*move) << '\n';*/
 
 		// Remember what happened
 		BoardState newState = BoardState::BoardState();
@@ -41,10 +38,10 @@ namespace Machiavelli {
 		newState.ply = ++_ply;
 		newState.capturedSquare = to;
 		newState.capturedPiece = GetPiece(to);
-		newState.kingCastle[0] = _kingCastle[0];
-		newState.kingCastle[1] = _kingCastle[1];
-		newState.queenCastle[0] = _queenCastle[0];
-		newState.queenCastle[1] = _queenCastle[1];
+		newState.kingCastle[Color::White] = _kingCastle[Color::White];
+		newState.kingCastle[Color::Black] = _kingCastle[Color::Black];
+		newState.queenCastle[Color::White] = _queenCastle[Color::White];
+		newState.queenCastle[Color::Black] = _queenCastle[Color::Black];
 
 		// remove old en passant
 		ResetEnpassant();
@@ -185,19 +182,19 @@ finish:
 			SetEnpassant(to + (us * 2 - 1) * 8);
 		}
 
+		// Move piece
+		SetPiece(to, Piece::WhiteNULL);
+		SetPiece(capturedIdx, capturedPiece);
+		SetPiece(from, movingPiece);
+
+finish:
 		// castling rights
 		_kingCastle[0] = _currentState.kingCastle[0];
 		_kingCastle[1] = _currentState.kingCastle[1];
 		_queenCastle[0] = _currentState.queenCastle[0];
 		_queenCastle[1] = _currentState.queenCastle[1];
 
-		// Move piece
-		SetPiece(to, Piece::WhiteNULL);
-		SetPiece(capturedIdx, capturedPiece);
-		SetPiece(from, movingPiece);
-
 		// Change turn
-finish:
 		if (changeTurn) {
 			ChangeTurn();
 		}
@@ -333,6 +330,16 @@ finish:
 	void Board::PrintPieceBitboard(Piece p)
 	{
 		PrintPieceBitboard(PieceType(p >> 1), Color(p & Piece::ColorMask));
+	}
+
+	void Board::PrintCastlingRights() 
+	{
+		std::string crights;
+		if (GetCastlingRights(Color::White, true)) crights.append("K");
+		if (GetCastlingRights(Color::White, false)) crights.append("Q");
+		if (GetCastlingRights(Color::Black, true)) crights.append("k");
+		if (GetCastlingRights(Color::Black, false)) crights.append("q");
+		std::cout << (crights == "" ? "-" : crights) << '\n';
 	}
 
 	Bitboard Board::GetAttacks(Color color)

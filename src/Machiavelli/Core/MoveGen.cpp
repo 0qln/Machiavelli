@@ -535,12 +535,12 @@ namespace Machiavelli {
 		}
 
 		// King side castling
-		if (_board->GetCastlingRights(us, true) && !(pieces | nusAttacks & 0x60ULL << us * 56)) {
+		if (_board->GetCastlingRights(us, true) && !((pieces | nusAttacks) & 0x60ULL << us * 56)) {
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::G), MoveHelper::KING_CASTLE_FLAG));
 		}
 
 		// Queen side castling
-		if (_board->GetCastlingRights(us, false) && !(pieces | nusAttacks & 0xEULL << us * 56)) {
+		if (_board->GetCastlingRights(us, false) && !((pieces | nusAttacks) & 0xEULL << us * 56)) {
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::C), MoveHelper::QUEEN_CASTLE_FLAG));
 		}
 	}

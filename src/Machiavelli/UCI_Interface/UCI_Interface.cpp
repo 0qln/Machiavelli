@@ -13,19 +13,28 @@ int main(int argc, char** argv)
 		// Handle UCI input	
 	}
 
-	auto b2 = Machiavelli::Board::Board("r3k2r/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 1");
+	auto b2 = Machiavelli::Board::Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 	auto gen2 = Machiavelli::MoveGen::MoveGen(&b2);
 	auto e5g4 = Machiavelli::MoveHelper::Create("e5g4", Machiavelli::MoveHelper::QUIET_MOVE_FLAG);
 	auto h3g2 = Machiavelli::MoveHelper::Create("h3g2", Machiavelli::MoveHelper::CAPTURE_FLAG);
 	auto e5f7 = Machiavelli::MoveHelper::Create("e5f7", Machiavelli::MoveHelper::CAPTURE_FLAG);
+	auto a1b1 = Machiavelli::MoveHelper::Create("a1b1", Machiavelli::MoveHelper::QUIET_MOVE_FLAG);
 
 
-	//b2.MakeMove(&e5f7);
+	//gen2.Perft(2, true);
+
+	//b2.MakeMove(&a1b1);
+	//b2.UndoMove(&a1b1);
 
 	std::cout << b2.ToString() << '\n';
-	std::cout << b2.ToString(b2.GetAttacks(Machiavelli::Color::White)) << '\n';
+	b2.PrintCastlingRights();
+	
+	//std::cout << b2.ToString(b2.GetAttacks(Machiavelli::Color::White)) << '\n';
 
-	gen2.Perft(1, true);
+	gen2.Perft(2, true);
+
+	std::cout << b2.ToString() << '\n';
+	b2.PrintCastlingRights();
 
 	//std::cout << '\n';
 

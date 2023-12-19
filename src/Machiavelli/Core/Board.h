@@ -68,6 +68,7 @@ namespace Machiavelli
 		void PrintColorBitboard(Piece p);
 		void PrintPieceBitboard(PieceType pt, Color c);
 		void PrintPieceBitboard(Piece p);
+		void PrintCastlingRights();
 
 		std::map<Piece, char> PieceChars = {
 			std::make_pair(Piece::WhiteNULL,	'.'),

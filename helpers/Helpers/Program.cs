@@ -8,96 +8,103 @@ internal class Program
     private static void Main(string[] args)
     {
         PerftComparison(
-@"h3g2-12: 1
-b4b3-0 : 1
-b4c3-12: 1
-a6e2-12: 1
-a6d3-0 : 1
-a6c4-0 : 1
-a6b5-0 : 1
-a6b7-0 : 1
-a6c8-0 : 1
-b6c8-0 : 1
-b6a4-0 : 1
-b6c4-0 : 1
-b6d5-12: 1
-e6e5-0 : 1
-e6d5-12: 1
-f6g8-0 : 1
-f6h7-0 : 1
-f6e4-12: 1
-f6g4-0 : 1
-f6d5-12: 1
-f6h5-0 : 1
-g6g5-0 : 1
-c7c6-0 : 1
-c7c5-1 : 1
-d7d6-0 : 1
-e7c5-0 : 1
-e7d6-0 : 1
-e7d8-0 : 1
-e7f8-0 : 1
-e7f7-12: 1
-g7h6-0 : 1
-g7f8-0 : 1
-a8b8-0 : 1
-a8c8-0 : 1
-a8d8-0 : 1
-e8f8-0 : 1
-e8f7-12: 1
-e8g8-10: 1
-e8c8-11: 1
-h8h4-0 : 1
-h8h5-0 : 1
-h8h6-0 : 1
-h8h7-0 : 1
-h8f8-0 : 1
-h8g8-0 : 1",
+@"a1b1-0 : 42
+a1c1-0 : 42
+a1d1-0 : 42
+e1d1-0 : 42
+e1f1-0 : 42
+e1g1-10: 42
+e1c1-11: 42
+h1f1-0 : 42
+h1g1-0 : 42
+a2a3-0 : 43
+a2a4-1 : 43
+b2b3-0 : 41
+d2c1-0 : 42
+d2e3-0 : 42
+d2f4-0 : 42
+d2g5-0 : 41
+d2h6-0 : 40
+e2d1-0 : 43
+e2f1-0 : 43
+e2d3-0 : 41
+e2c4-0 : 40
+e2b5-0 : 38
+e2a6-12: 35
+g2g3-0 : 41
+g2g4-1 : 41
+g2h3-12: 42
+c3b5-0 : 38
+c3a4-0 : 41
+c3b1-0 : 41
+c3d1-0 : 41
+f3g4-0 : 42
+f3h5-0 : 42
+f3d3-0 : 41
+f3e3-0 : 42
+f3g3-0 : 42
+f3h3-12: 42
+f3f4-0 : 42
+f3f5-0 : 44
+f3f6-12: 38
+d5d6-0 : 40
+d5e6-12: 45
+e5f7-12: 43
+e5d7-12: 44
+e5g6-12: 42
+e5c6-0 : 40
+e5d3-0 : 42
+e5c4-0 : 41
+e5g4-0 : 43",
 
-@"b4b3: 1
-e6e5: 1
-g6g5: 1
-c7c6: 1
-d7d6: 1
-c7c5: 1
-h3g2: 1
-e6d5: 1
-b4c3: 1
-b6a4: 1
-b6c4: 1
-b6d5: 1
-b6c8: 1
-f6e4: 1
-f6g4: 1
-f6d5: 1
-f6h5: 1
-f6h7: 1
-f6g8: 1
-a6e2: 1
-a6d3: 1
-a6c4: 1
-a6b5: 1
-a6b7: 1
-a6c8: 1
-g7h6: 1
-g7f8: 1
-a8b8: 1
-a8c8: 1
-a8d8: 1
-h8h4: 1
-h8h5: 1
-h8h6: 1
-h8h7: 1
-h8f8: 1
-h8g8: 1
-e7c5: 1
-e7d6: 1
-e7f7: 1
-e7d8: 1
-e7f8: 1
-e8f7: 1
-e8g8: 1
-e8f8: 1");
+@"a2a3: 44
+b2b3: 42
+g2g3: 42
+d5d6: 41
+a2a4: 44
+g2g4: 42
+g2h3: 43
+d5e6: 46
+c3b1: 42
+c3d1: 42
+c3a4: 42
+c3b5: 39
+e5d3: 43
+e5c4: 42
+e5g4: 44
+e5c6: 41
+e5g6: 42
+e5d7: 45
+e5f7: 44
+d2c1: 43
+d2e3: 43
+d2f4: 43
+d2g5: 42
+d2h6: 41
+e2d1: 44
+e2f1: 44
+e2d3: 42
+e2c4: 41
+e2b5: 39
+e2a6: 36
+a1b1: 43
+a1c1: 43
+a1d1: 43
+h1f1: 43
+h1g1: 43
+f3d3: 42
+f3e3: 43
+f3g3: 43
+f3h3: 43
+f3f4: 43
+f3g4: 43
+f3f5: 45
+f3h5: 43
+f3f6: 39
+e1d1: 43
+e1f1: 43
+e1g1: 43
+e1c1: 43");
     }
 
     private static void PerftComparison(string current, string expected)
@@ -135,15 +142,24 @@ e8f8: 1");
         }
 
         // Compare values 
+        int deltas = 0;
         foreach (var kvp in processed1)
         {
             if (processed2.TryGetValue(kvp.Key, out int value2))
             {
                 if (kvp.Value != value2)
                 {
-                    Console.WriteLine($"Value difference at key {kvp.Key} [ `current`: {processed1[kvp.Key]}, `expected`: {processed2[kvp.Key]} ]");
+                    deltas++;
+                    var v1 = processed1[kvp.Key];
+                    var v2 = processed2[kvp.Key];
+                    Console.WriteLine($"Value difference at key {kvp.Key} [ `current`: {v1}, `expected`: {v2} , delta: {v1 - v2}]");
+                }
+                else
+                {
+                    Console.WriteLine($"No value difference for key {kvp.Key}.");
                 }
             }
         }
+        Console.WriteLine($"Detected {deltas}/{processed2.Count} value differences.");
     }
 }
