@@ -1,46 +1,76 @@
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <algorithm>
+#include <iterator>
+#include <regex>
 
 #include "../Core/Board.h"
 #include "../Core/MoveGen.h"
 #include "../Core/MoveHelper.h"
 #include "../Core/Misc.h"
 
-/// https://gist.github.com/DOBRO/2592c6dad754ba67e6dcaec8c90165bf
+#include "UCI_Commands.h"
 
-int main(int argc, char** argv)
-{
-	if (argc) {
-		// Handle UCI input	
+
+
+
+	std::string GetFen(std::vector<std::string> tokens) {
+		std::string fen;
+		if (tokens[1] == "fen") {
+			fen = "";
+			int i = 2;
+			while (true) {
+				fen.append(tokens[i++]);
+				if (!(i <= 8 && i < tokens.size() && tokens[i] != "moves")) break;
+				fen.append(" ");
+			}
+		}
+		else if (tokens[1] == "startposition") {
+			fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+		}
+		return fen;
+	}
+	std::vector<std::string> GetMoves(std::vector<std::string> tokens) {
+		int start = 2;
+		do {
+			if (start >= tokens.size()) return std::vector<std::string>();
+		} 
+		while (tokens[start++] != "moves");
+		
+		return std::vector<std::string>(tokens.begin() + start, tokens.end());
 	}
 
-	auto b2 = Machiavelli::Board::Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
-	auto gen2 = Machiavelli::MoveGen::MoveGen(&b2);
-	auto e5g4 = Machiavelli::MoveHelper::Create("e5g4", Machiavelli::MoveHelper::QUIET_MOVE_FLAG);
-	auto h3g2 = Machiavelli::MoveHelper::Create("h3g2", Machiavelli::MoveHelper::CAPTURE_FLAG);
-	auto e5f7 = Machiavelli::MoveHelper::Create("e5f7", Machiavelli::MoveHelper::CAPTURE_FLAG);
-	auto a1b1 = Machiavelli::MoveHelper::Create("a1b1", Machiavelli::MoveHelper::QUIET_MOVE_FLAG);
+	int main(int argc, char** argv)
+	{
+		std::string input;
+		Machiavelli::Board board;
 
+		while (true) {
+			std::getline(std::cin, input);
+			std::vector<std::string> tokens;
+			std::regex re("\\S+");
+			std::sregex_token_iterator begin(input.begin(), input.end(), re), end;
+			std::copy(begin, end, std::back_inserter(tokens));
 
-	//gen2.Perft(2, true);
+			if (tokens.empty()) {
+				continue;
+			}		
 
-	//b2.MakeMove(&a1b1);
-	//b2.UndoMove(&a1b1);
+			UCI::Command command = UCI::ParseCommand(tokens[0]);
 
-	std::cout << b2.ToString() << '\n';
-	b2.PrintCastlingRights();
-	
-	//std::cout << b2.ToString(b2.GetAttacks(Machiavelli::Color::White)) << '\n';
+			switch (command)
+			{
+			case UCI::Command::POSITION:
+				UCI::ExecuteCommand::Position(GetFen(tokens), GetMoves(tokens), &board);
+				break;
+			
+			default:
+				break;
+			}
+		}
+		
+		return EXIT_SUCCESS;
+	}
 
-	gen2.Perft(2, true);
-
-	std::cout << b2.ToString() << '\n';
-	b2.PrintCastlingRights();
-
-	//std::cout << '\n';
-
-	//b2.MakeMove(&e5g4, true);
-	//gen2.Perft(1, true);
-	//b2.UndoMove(&e5g4, true);
-
-	//std::cout << b2.ToString() << '\n';
-}
