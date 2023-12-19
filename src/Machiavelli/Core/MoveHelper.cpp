@@ -224,7 +224,7 @@ namespace Machiavelli {
     }
 
     /// <summary>
-    /// Convert a move to algebraic notation.
+    /// Convert a move to UCI notation.
     /// </summary>
     /// <param name="move">The move to be converted</param>
     /// <returns></returns>
@@ -234,9 +234,19 @@ namespace Machiavelli {
         auto from = Misc::FromSquareIndex(fromSqr);
         auto to = Misc::FromSquareIndex(toSqr);
         from.append(to);
-        from.append("-");
-        from.append(std::to_string(int(GetFlag(&move))));
-        if (GetFlag(&move) < 10) from.append(" "); // right pad
+
+        // append promotion piece type
+        auto pt = "420";
+        switch (GetFlag(&move))
+        {
+        default: pt = ""; break;
+        case Flags::PROMOTION_BISHOP_FLAG: case Flags::CAPTURE_PROMOTION_BISHOP_FLAG: pt = "b"; break;
+        case Flags::PROMOTION_KNIGHT_FLAG: case Flags::CAPTURE_PROMOTION_KNIGHT_FLAG: pt = "n"; break;
+        case Flags::PROMOTION_ROOK_FLAG: case Flags::CAPTURE_PROMOTION_ROOK_FLAG: pt = "r"; break;
+        case Flags::PROMOTION_QUEEN_FLAG: case Flags::CAPTURE_PROMOTION_QUEEN_FLAG: pt = "q"; break;
+        }
+        from.append(pt);
+
         return from;
     }
 }

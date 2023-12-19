@@ -393,7 +393,10 @@ finish:
 		return IsInCheck(GetTurn());
 	}
 
-
+	/// <summary>
+	/// No performance considerations, this is only a temporary solution.
+	/// </summary>
+	/// <returns></returns>
 	bool Board::IsInCheck(Color color)
 	{
 		//std::cout << "Board::IsInCheck" << '\n';

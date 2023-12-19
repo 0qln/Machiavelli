@@ -93,15 +93,17 @@ namespace Machiavelli {
 
 		const Square captureLeftIdx = idx + (us == Color::White ? 7 : -9);
 		const Square captureRightIdx = idx + (us == Color::White ? 9 : -7);
+		
+		const Rank firstRank = us ? 6 : 1;
+		const Rank lastRank = us ? 1 : 6;
 
 		// Move 1 square forward
 		// We don't need to check wether the pawn is on the last rank or not, which might cause overflow,
 		// as the pawn can never be on the last rank. If it is moved there, it will have to promote.
-		Square forward1Idx = idx + (us == Color::White ? 8 : -8);
+		Square forward1Idx = idx + (us ? -8 : 8);
 		Bitboard forward1 = 1ULL << forward1Idx; // By definition this has always only one set bit
 		if (!((enemies | friends) & forward1)) {
-			//result |= forward1;
-			if (rankIdx == 7 || rankIdx == 0) {
+			if (rankIdx == lastRank) {
 				// promo
 				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_BISHOP_FLAG));
 				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_KNIGHT_FLAG));
@@ -117,10 +119,9 @@ namespace Machiavelli {
 			// If we can't move forward one square,
 			// we won't be able to move forward two squares.
 			//	=> This is nested inside the `forward1` condition 
-			Square forward2Idx = idx + (us == Color::White ? 16 : -16);
+			Square forward2Idx = idx + (us ? -16 : 16);
 			Bitboard forward2 = 1ULL << forward2Idx; // By definition this has always only one set bit
-			if (rankIdx == (us == Color::White ? 1 : 6) && !((enemies | friends) & forward2)) {
-				//result |= forward2;
+			if (rankIdx == firstRank && !((enemies | friends) & forward2)) {
 				movelist->push_back(MoveHelper::Create(idx, forward2Idx, MoveHelper::DOUBLE_PAWN_PUSH_FLAG));
 			}
 		}
@@ -128,7 +129,7 @@ namespace Machiavelli {
 		// Capture left 
 		Bitboard captureLeft = 1ULL << captureLeftIdx;
 		if (fileIdx > 0 && enemies & captureLeft) {
-			if (rankIdx == 7 || rankIdx == 0) {
+			if (rankIdx == lastRank) {
 				// promo capture
 				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG));
 				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG));
@@ -144,7 +145,7 @@ namespace Machiavelli {
 		// Capture right
 		Bitboard captureRight = 1ULL << captureRightIdx;
 		if (fileIdx < 7 && enemies & captureRight) {
-			if (rankIdx == 7 || rankIdx == 0) {
+			if (rankIdx == lastRank) {
 				// promo capture
 				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG));
 				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG));
@@ -165,7 +166,6 @@ namespace Machiavelli {
 			movelist->push_back(MoveHelper::Create(idx, _board->GetEnPassantSquare(), MoveHelper::EN_PASSANT_FLAG));
 		}
 	}
-
 	Bitboard MoveGen::GeneratePawnAttacks(const Square idx, Color us)
 	{
 		Bitboard result = 0ULL;
@@ -238,7 +238,6 @@ namespace Machiavelli {
 			if (fileIdx < 6) addMove(idx - 6);
 		}
 	}
-
 	Bitboard MoveGen::GenerateKnightAttacks(const Square idx, Color us)
 	{
 		const auto rankIdx = idx / 8;
@@ -483,7 +482,6 @@ namespace Machiavelli {
 		GeneratePseudoLegalBishopMoves(idx, us, movelist);
 		GeneratePseudoLegalRookMoves(idx, us, movelist);
 	}
-
 	Bitboard MoveGen::GenerateQueenAttacks(const Square idx, Color us)
 	{
 		return GenerateBishopAttacks(idx, us) | GenerateRookAttacks(idx, us);
@@ -532,7 +530,6 @@ namespace Machiavelli {
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::C), MoveHelper::QUEEN_CASTLE_FLAG));
 		}
 	}
-
 	Bitboard MoveGen::GenerateKingAttacks(const Square idx, Color us)
 	{
 		auto rankIdx = idx / 8;
