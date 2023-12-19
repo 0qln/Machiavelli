@@ -7,108 +7,15 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        PerftComparison(
-@"a1b1-0 : 42
-a1c1-0 : 42
-a1d1-0 : 42
-e1d1-0 : 42
-e1f1-0 : 42
-e1g1-10: 42
-e1c1-11: 42
-h1f1-0 : 42
-h1g1-0 : 42
-a2a3-0 : 43
-a2a4-1 : 43
-b2b3-0 : 41
-d2c1-0 : 42
-d2e3-0 : 42
-d2f4-0 : 42
-d2g5-0 : 41
-d2h6-0 : 40
-e2d1-0 : 43
-e2f1-0 : 43
-e2d3-0 : 41
-e2c4-0 : 40
-e2b5-0 : 38
-e2a6-12: 35
-g2g3-0 : 41
-g2g4-1 : 41
-g2h3-12: 42
-c3b5-0 : 38
-c3a4-0 : 41
-c3b1-0 : 41
-c3d1-0 : 41
-f3g4-0 : 42
-f3h5-0 : 42
-f3d3-0 : 41
-f3e3-0 : 42
-f3g3-0 : 42
-f3h3-12: 42
-f3f4-0 : 42
-f3f5-0 : 44
-f3f6-12: 38
-d5d6-0 : 40
-d5e6-12: 45
-e5f7-12: 43
-e5d7-12: 44
-e5g6-12: 42
-e5c6-0 : 40
-e5d3-0 : 42
-e5c4-0 : 41
-e5g4-0 : 43",
-
-@"a2a3: 44
-b2b3: 42
-g2g3: 42
-d5d6: 41
-a2a4: 44
-g2g4: 42
-g2h3: 43
-d5e6: 46
-c3b1: 42
-c3d1: 42
-c3a4: 42
-c3b5: 39
-e5d3: 43
-e5c4: 42
-e5g4: 44
-e5c6: 41
-e5g6: 42
-e5d7: 45
-e5f7: 44
-d2c1: 43
-d2e3: 43
-d2f4: 43
-d2g5: 42
-d2h6: 41
-e2d1: 44
-e2f1: 44
-e2d3: 42
-e2c4: 41
-e2b5: 39
-e2a6: 36
-a1b1: 43
-a1c1: 43
-a1d1: 43
-h1f1: 43
-h1g1: 43
-f3d3: 42
-f3e3: 43
-f3g3: 43
-f3h3: 43
-f3f4: 43
-f3g4: 43
-f3f5: 45
-f3h5: 43
-f3f6: 39
-e1d1: 43
-e1f1: 43
-e1g1: 43
-e1c1: 43");
+        PerftComparison();
+        Console.Read();
     }
 
-    private static void PerftComparison(string current, string expected)
+    private static void PerftComparison()
     {
+        var current = File.ReadAllText(@"../../../InputData/PerftComparison/current.txt");
+        var expected = File.ReadAllText(@"../../../InputData/PerftComparison/expected.txt");
+
         Dictionary<string, int> ProcessData(string data)
         {
             return data
