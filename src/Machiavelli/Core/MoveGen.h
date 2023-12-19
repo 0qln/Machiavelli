@@ -21,6 +21,7 @@ namespace Machiavelli {
 
 	public:
 		MoveGen(Board* b);
+		~MoveGen();
 
 		int Perft(int dpeth, bool pv);
 
