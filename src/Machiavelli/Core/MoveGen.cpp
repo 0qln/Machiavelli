@@ -339,7 +339,6 @@ namespace Machiavelli {
 
 		return result;
 	}
-
 	Bitboard MoveGen::GenerateBishopAttacks(const Square idx, Color us)
 	{
 		Color nus = Color(!us);
@@ -355,37 +354,32 @@ namespace Machiavelli {
 		auto diag2Idx = rankIdx + fileIdx;
 		Bitboard diag2 = DiagMask2[diag2Idx];
 
-		Bitboard bMask, wMask, square;
-
 		Bitboard selfDivisorDown = ~BitHelper::FromIndex(idx);
 		BitHelper::DeactivateBit(&selfDivisorDown, &idx);
 
 		Bitboard selfDivisorUp = BitHelper::FromIndex(idx);
 		BitHelper::DeactivateBit(&selfDivisorUp, &idx);
 
+		const Bitboard pieces = (_board->GetColorBitboard(us) | _board->GetColorBitboard(nus)) ^ self;
+		const Bitboard diag1Pieces = pieces & diag1;
+		const Bitboard diag2Pieces = pieces & diag2;
+		Bitboard squares;
+
 		// -< Bottom Left >- 
-		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorDown;
-		wMask = _board->GetColorBitboard(us) & (diag1 & selfDivisorDown | self);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & diag1 & selfDivisorDown;
-		result |= square;
+		squares = 0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(diag1Pieces & selfDivisorDown);
+		result |= squares & diag1 & selfDivisorDown;
 
-		// -< Up Right >-
-		bMask = _board->GetColorBitboard(nus) & diag1 & selfDivisorUp;
-		wMask = _board->GetColorBitboard(us) & (diag1 & selfDivisorUp | self);
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & diag1 & selfDivisorUp;
-		result |= square;
+		//// -< Up Right >-
+		squares = 0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(diag1Pieces & selfDivisorUp);
+		result |= squares & diag1 & selfDivisorUp;
 
-		// -< Bottom Right >-
-		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorDown;
-		wMask = _board->GetColorBitboard(us) & (diag2 & selfDivisorDown | self);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & diag2 & selfDivisorDown;
-		result |= square;
+		//// -< Bottom Right >-
+		squares = 0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(diag2Pieces & selfDivisorDown);
+		result |= squares & diag2 & selfDivisorDown;
 
-		// -< Up Left >-
-		bMask = _board->GetColorBitboard(nus) & diag2 & selfDivisorUp;
-		wMask = _board->GetColorBitboard(us) & (diag2 & selfDivisorUp | self);
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & diag2 & selfDivisorUp;
-		result |= square;
+		//// -< Up Left >-
+		squares = 0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(diag2Pieces & selfDivisorUp);
+		result |= squares & diag2 & selfDivisorUp;
 
 		return result;
 	}
@@ -445,7 +439,6 @@ namespace Machiavelli {
 
 		return result;
 	}
-
 	Bitboard MoveGen::GenerateRookAttacks(const Square idx, Color us)
 	{
 		Color nus = Color(!us);
@@ -461,31 +454,26 @@ namespace Machiavelli {
 		Bitboard selfDivisorUp = BitHelper::FromIndex(idx);
 		BitHelper::DeactivateBit(&selfDivisorUp, &idx);
 
-		Bitboard bMask, wMask, square;
+		const Bitboard pieces = (_board->GetColorBitboard(us) | _board->GetColorBitboard(nus)) ^ rookSquare;
+		const Bitboard rankPieces = pieces & rank;
+		const Bitboard filePieces = pieces & file;
+		Bitboard squares;
 
 		// -< Down >-
-		bMask = _board->GetColorBitboard(nus) & file & selfDivisorDown;
-		wMask = _board->GetColorBitboard(us) & (file & selfDivisorDown | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & file & selfDivisorDown;
-		result |= square;
+		squares = 0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(filePieces & selfDivisorDown);
+		result |= squares & file & selfDivisorDown;
 
 		// -< Up >- 
-		bMask = _board->GetColorBitboard(nus) & file & selfDivisorUp;
-		wMask = _board->GetColorBitboard(us) & (file & selfDivisorUp | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & file & selfDivisorUp;
-		result |= square;
-
+		squares = 0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(filePieces & selfDivisorUp);
+		result |= squares & file & selfDivisorUp;
+		
 		// -< Left >-
-		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorDown;
-		wMask = _board->GetColorBitboard(us) & (rank & selfDivisorDown | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(bMask | wMask)) & rank & selfDivisorDown;
-		result |= square;
+		squares = 0xFFFFFFFFFFFFFFFF << 63 - BitHelper::MsbIdx(rankPieces & selfDivisorDown);
+		result |= squares & rank & selfDivisorDown;
 
 		// -< Right >-
-		bMask = _board->GetColorBitboard(nus) & rank & selfDivisorUp;
-		wMask = _board->GetColorBitboard(us) & (rank & selfDivisorUp | rookSquare);
-		square = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(bMask | wMask)) & rank & selfDivisorUp;
-		result |= square;
+		squares = 0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(rankPieces & selfDivisorUp);
+		result |= squares & rank & selfDivisorUp;
 
 		return result;
 	}
