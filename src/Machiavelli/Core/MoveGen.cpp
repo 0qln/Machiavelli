@@ -562,10 +562,11 @@ namespace Machiavelli {
 		Color nus = Color(!us);
 		auto rankIdx = idx / 8;
 		auto fileIdx = idx % 8;
-		Bitboard allies = _board->GetColorBitboard(us);
-		Bitboard enemies = _board->GetColorBitboard(nus);
-		Bitboard pieces = allies | enemies;
-		Bitboard nusAttacks = _board->GetAttacks(nus);
+		const Bitboard allies = _board->GetColorBitboard(us);
+		const Bitboard enemies = _board->GetColorBitboard(nus);
+		const Bitboard pieces = allies | enemies;
+		const Bitboard nusAttacks = _board->GetAttacks(nus);
+		const bool inCheck = nusAttacks & (1ULL << idx);
 		Bitboard moves, attacks, result;
 
 		auto ranks = RankMask[rankIdx];
@@ -591,14 +592,19 @@ namespace Machiavelli {
 		}
 
 		// King side castling
-		const bool inCheck = _board->GetAttacks(nus) & _board->GetPiece(idx);
-
-		if (!inCheck && _board->GetCastlingRights(us, true) && !((pieces | nusAttacks) & (0x60ULL << us * 56))) {
+		if (!inCheck && // not in check
+			_board->GetCastlingRights(us, true) && // allwoed castle
+			!((pieces | nusAttacks) & (0x60ULL << us * 56))) // no pieces blocking the way of the rook or king and king wouldn't move through check
+		{
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::G), MoveHelper::KING_CASTLE_FLAG));
 		}
 
 		// Queen side castling
-		if (!inCheck && _board->GetCastlingRights(us, false) && !((pieces & (0xEULL << us * 56)) | (nusAttacks & (0xCULL << us * 56)))) {
+		if (!inCheck && // not in check
+			_board->GetCastlingRights(us, false) && // allowed castle
+			!(pieces & (0xEULL << us * 56)) && // no pieces blocking the way of the rook or king
+			!(nusAttacks & (0xCULL << us * 56))) // king wouldn't move through check
+		{
 			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::C), MoveHelper::QUEEN_CASTLE_FLAG));
 		}
 	}
