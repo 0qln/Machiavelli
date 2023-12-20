@@ -1,38 +1,35 @@
 #include "UCI_Commands.h"
 #include "../Core/MoveHelper.h"
+#include <iostream>
 
 namespace UCI {
 	Command UCI::ParseCommand(const std::string& token) {
 		const std::map<std::string, Command> map_commands = {
 			{ "position", POSITION },
+			{ "go", GO },
 		};
 		return map_commands.at(token);
 	}
 
 	bool ExecuteCommand::Position(std::string fen, std::vector<std::string> moves, Machiavelli::Board* board)
 	{
-		board->SetFromFEN(fen);
+		// Set up board
+		*board = Machiavelli::Board::FromFEN(fen);
 
-		board->Print();
-
+		// Make moves
 		for (auto move : moves) {
-			// Make move
 			auto plegals = Machiavelli::MoveGen(board).GeneratePseudoLegalMoves();
-			Machiavelli::Move* actualMove = __nullptr;
-			for (auto m : plegals) {
-				if (Machiavelli::MoveHelper::ToString(m) == move) { 
-					actualMove = &m; 
-					break;
-				}
-			}
 
-			if (!actualMove) {
+			auto it = std::find_if(plegals.begin(), plegals.end(), [&move](const Machiavelli::Move& m) {
+				return Machiavelli::MoveHelper::ToString(m) == move;
+			});
+
+			if (it != plegals.end()) {
+				board->MakeMove(&(*it));
+			}
+			else {
 				return false;
 			}
-
-			board->MakeMove(actualMove);
-
-			board->Print();
 		}
 		
 		return true;

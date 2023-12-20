@@ -14,28 +14,21 @@ namespace Machiavelli
 
 
 	struct BoardState {
+		
 		BoardState* previous;
 		Piece capturedPiece;
 		Square capturedSquare;
 		Move move;
 		int ply;
-		bool* kingCastle;
-		bool* queenCastle;
+		bool kingCastle[2];
+		bool queenCastle[2];
 
-		BoardState() {
-			queenCastle = new bool[2];
-			kingCastle = new bool[2];
-			ply = 0;
-			move = 0;
-			capturedSquare = 0;
-			capturedPiece = Piece(0);
-			previous = __nullptr;
+		BoardState() 
+			: ply(0), move(0), capturedSquare(0), capturedPiece(Piece(0)), previous(nullptr) { 
+			kingCastle[0] = kingCastle[1] = false;
+			queenCastle[0] = queenCastle[1] = false;
 		}
-
-		~BoardState() {
-			delete[] kingCastle;
-			delete[] queenCastle;
-		}
+		~BoardState() { }
 	};
 
 
@@ -49,11 +42,11 @@ namespace Machiavelli
 
 		Color _turn = Color::White;
 
-		bool* _kingCastle; 
-		bool* _queenCastle;
+		bool _kingCastle[2];
+		bool _queenCastle[2];
 
-		Bitboard* _pieceTypes;
-		Bitboard* _pieceColors;
+		Bitboard _pieceTypes[7];
+		Bitboard _pieceColors[2];
 		Bitboard _enPassantBitboard;
 		Square _enPassantSquare;
 
@@ -121,6 +114,10 @@ namespace Machiavelli
 		void SetTurn(Color turn);
 
 
+		void SetQueenCastlingRights(Color c, bool value);
+		void SetKingCastlingRights(Color c, bool value);
+
+
 		Color GetTurn();
 
 
@@ -132,9 +129,7 @@ namespace Machiavelli
 		Bitboard GetCheckBlockades(Color color);
 
 
-		Board(std::string fen);
-
-		void SetFromFEN(std::string fen);
+		static Board FromFEN(std::string fen);
 
 		Board();
 
@@ -147,9 +142,6 @@ namespace Machiavelli
 
 
 		void UndoMove(const Move* move, bool changeTurn = true);
-
-
-		void Clear();
 
 
 		Piece GetPiece(const Square index);

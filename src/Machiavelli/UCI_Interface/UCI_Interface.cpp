@@ -56,7 +56,10 @@
 
 			if (tokens.empty()) {
 				continue;
-			}		
+			}
+			if (input == "exit") {
+				break;
+			}
 
 			UCI::Command command = UCI::ParseCommand(tokens[0]);
 

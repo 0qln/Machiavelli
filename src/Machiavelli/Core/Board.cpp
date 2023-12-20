@@ -20,11 +20,8 @@
 #include <string>
 #include <vector>
 
-#define BB_ALLOC(n, s) \
-n = new Bitboard[s]; \
-for (int i = 0; i < s; i++) {\
-	n[i] = 0;\
-}\
+
+#define BB_FILL(n, s) for (int i = 0; i < s; i++) n[i] = 0; 
 
 
 namespace Machiavelli {
@@ -384,6 +381,16 @@ finish:
 		_turn = turn;
 	}
 
+	void Board::SetQueenCastlingRights(Color c, bool value)
+	{
+		_queenCastle[c] = value;
+	}
+
+	void Board::SetKingCastlingRights(Color c, bool value)
+	{
+		_kingCastle[c] = value;
+	}
+
 	Color Board::GetTurn()
 	{
 		return _turn;
@@ -400,10 +407,6 @@ finish:
 	/// <returns></returns>
 	bool Board::IsInCheck(Color color)
 	{
-		//std::cout << "Board::IsInCheck" << '\n';
-
-		//int i = 0;
-
 		// Go through all lines the enemy can play 
 		for (auto move : MoveGen::MoveGen(this).GeneratePseudoLegalMoves(Color(!color)))
 		{
@@ -415,22 +418,8 @@ finish:
 				return true;
 			}
 
-			//if (i == 37) {
-			//	std::cout << MoveHelper::ToString(move) << '\n';
-			//	std::cout << ToString() << '\n';
-			//}
-
 			UndoMove(&move, false);
-
-
-			//if (i == 37) break;
-
-			//i++;
 		}
-		
-		//std::cout << ToString() << '\n';
-
-		//std::cout << "Board::IsInCheck" << '\n';
 
 		return false;
 	}
@@ -448,39 +437,25 @@ finish:
 		}
 	}
 
-	void Board::Clear()
+	Board::~Board()
+	{
+	}
+
+	Board::Board()
 	{
 		_currentState = BoardState::BoardState();
 		_currentState.ply = 0;
 		_enPassantSquare = -1;
 		_enPassantBitboard = 0;
-		_kingCastle = new bool[2];
-		_queenCastle = new bool[2];
-		BB_ALLOC(_pieceTypes, 7);
-		BB_ALLOC(_pieceColors, 2);
+		_kingCastle[0] = _kingCastle[1] = false;
+		_queenCastle[0] = _queenCastle[1] = false;
+		BB_FILL(_pieceTypes, 7);
+		BB_FILL(_pieceColors, 2);
 	}
 
-	Board::Board() 
+	Board Board::FromFEN(std::string fen) 
 	{
-		Clear();
-	}
-
-	Board::~Board()
-	{
-		delete[] _pieceTypes;
-		delete[] _pieceColors;
-	}
-
-	Board::Board(std::string fen) 
-		: Board()
-	{
-		Print();
-		SetFromFEN(fen);
-	}
-
-	void Board::SetFromFEN(std::string fen) 
-	{
-		Clear ();
+		Board board;
 
 		std::string str;
 
@@ -509,7 +484,7 @@ finish:
 
 			// get piece char as Piece Type
 			Piece p = Piece::WhiteNULL;
-			for (auto& i : PieceChars) {
+			for (auto& i : board.PieceChars) {
 				if (i.second == fen.at(fenIdx)) {
 					p = i.first;
 					break;
@@ -518,7 +493,7 @@ finish:
 
 			// evaluate
 			int idx = squareIdx ^ 7;
-			SetPiece(idx, p);
+			board.SetPiece(idx, p);
 
 			squareIdx--;
 		}
@@ -526,35 +501,37 @@ finish:
 		// turn
 		str = fen.substr(parts[1], parts[2] - parts[1]);
 		if (str.find('w') != std::string::npos) {
-			_turn = Color::White;
+			board.SetTurn(Color::White);
 		}
 		else {
-			_turn = Color::Black;
+			board.SetTurn(Color::Black);
 		}
 
 		// castling
 		str = fen.substr(parts[2], parts[3] - parts[2]);
-		if (str.find('K') != std::string::npos) _kingCastle[Color::White] = true;
-		if (str.find('Q') != std::string::npos) _queenCastle[Color::White] = true;
-		if (str.find('k') != std::string::npos) _kingCastle[Color::Black] = true;
-		if (str.find('q') != std::string::npos) _queenCastle[Color::Black] = true;
+		if (str.find('K') != std::string::npos) board.SetKingCastlingRights(Color::White, true);
+		if (str.find('Q') != std::string::npos) board.SetQueenCastlingRights(Color::White, true);
+		if (str.find('k') != std::string::npos) board.SetKingCastlingRights(Color::Black, true);
+		if (str.find('q') != std::string::npos) board.SetQueenCastlingRights(Color::Black, true);
 
 		// en passant
 		str = fen.substr(parts[3], parts[4] - parts[3]);
 		if (str.find('-') == std::string::npos) {
-			SetEnpassant(Misc::ToSquareIndex(&str));
+			board.SetEnpassant(Misc::ToSquareIndex(&str));
 		}
 
 		// optional:
 		if (parts[5] >= 0 && parts[5] < fen.size()) {
 			// ply
 			str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
-			_ply = stoi(str);
+			board._ply = stoi(str);
 
 			// move
 			str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
-			_move = stoi(str);
+			board._move = stoi(str);
 		}
+
+		return board;
 	}
 
 	void Board::ChangeTurn()
