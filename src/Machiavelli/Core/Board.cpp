@@ -36,7 +36,7 @@ namespace Machiavelli {
 		const Color us = Color(GetPiece(from) & Piece::ColorMask);
 
 		// Remember what happened
-		BoardState newState = BoardState::BoardState();
+		BoardState newState;
 		newState.move = *move;
 		newState.ply = ++_ply;
 		newState.capturedSquare = to;
@@ -135,15 +135,16 @@ finish:
 			ChangeTurn();
 		}
 
-		SetState(&newState);
+	  	_boardStates.push_back(&newState);
 	}
 
 	void Board::UndoMove(const Move* move, bool changeTurn)
 	{
+		const auto currentState = _boardStates[_ply-1];
 		const Square from = MoveHelper::GetFrom(move);
 		const Square to = MoveHelper::GetTo(move);
 		Piece movingPiece = GetPiece(to);
-		Piece capturedPiece = _currentState.capturedPiece;
+		Piece capturedPiece = currentState.capturedPiece;
 		Square capturedIdx = to;
 		const int fRankIdx = from / 8;
 		const Color us = Color(GetPiece(to) & Piece::ColorMask);
@@ -192,18 +193,17 @@ finish:
 
 finish:
 		// castling rights
-		_kingCastle[0] = _currentState.kingCastle[0];
-		_kingCastle[1] = _currentState.kingCastle[1];
-		_queenCastle[0] = _currentState.queenCastle[0];
-		_queenCastle[1] = _currentState.queenCastle[1];
+		_kingCastle[0] = currentState.kingCastle[0];
+		_kingCastle[1] = currentState.kingCastle[1];
+		_queenCastle[0] = currentState.queenCastle[0];
+		_queenCastle[1] = currentState.queenCastle[1];
 
 		// Change turn
 		if (changeTurn) {
 			ChangeTurn();
 		}
 
-		// Change state
-		PopState();
+		_boardStates.pop_back();
 
 		--_ply;
 	}
@@ -279,17 +279,6 @@ finish:
 	{
 		_enPassantSquare = idx;
 		_enPassantBitboard = 1ULL << idx;
-	}
-
-	void Board::PopState()
-	{
-		_currentState = *_currentState.previous;
-	}
-
-	void Board::SetState(BoardState* newState)
-	{
-		newState->previous = new BoardState(_currentState);
-		_currentState = *newState;
 	}
 
 	void Board::Print()
@@ -443,8 +432,6 @@ finish:
 
 	Board::Board()
 	{
-		_currentState = BoardState::BoardState();
-		_currentState.ply = 0;
 		_enPassantSquare = -1;
 		_enPassantBitboard = 0;
 		_kingCastle[0] = _kingCastle[1] = false;

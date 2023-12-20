@@ -15,7 +15,6 @@ namespace Machiavelli
 
 	struct BoardState {
 		
-		BoardState* previous;
 		Piece capturedPiece;
 		Square capturedSquare;
 		Move move;
@@ -23,11 +22,24 @@ namespace Machiavelli
 		bool kingCastle[2];
 		bool queenCastle[2];
 
+
 		BoardState() 
-			: ply(0), move(0), capturedSquare(0), capturedPiece(Piece(0)), previous(nullptr) { 
+			: ply(0), move(0), capturedSquare(0), capturedPiece(Piece(0)) { 
 			kingCastle[0] = kingCastle[1] = false;
 			queenCastle[0] = queenCastle[1] = false;
 		}
+		
+		BoardState(BoardState* original) {
+			kingCastle[0] = original->kingCastle[0];
+			kingCastle[1] = original->kingCastle[1];
+			queenCastle[0] = original->queenCastle[0];
+			queenCastle[1] = original->queenCastle[1];
+			ply = original->ply;
+			move = original->move;
+			capturedPiece = original->capturedPiece;
+			capturedSquare = original->capturedSquare;
+		}
+		
 		~BoardState() { }
 	};
 
@@ -50,15 +62,12 @@ namespace Machiavelli
 		Bitboard _enPassantBitboard;
 		Square _enPassantSquare;
 
-		BoardState _currentState;
+		// TODO: Replace with linkedlist-like data structure 
+		std::vector<BoardState> _boardStates;
 
 		void ResetEnpassant();
 
 		void SetEnpassant(Square idx);
-
-		void PopState();
-
-		void SetState(BoardState* newState);
 
 
 
