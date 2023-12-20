@@ -19,6 +19,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <regex>
 
 
 #define BB_FILL(n, s) for (int i = 0; i < s; i++) n[i] = 0; 
@@ -429,36 +430,30 @@ finish:
 	{
 		Board board;
 
-		std::string str;
-
-		int parts[6];
-		int spaceIdx = 0;
-		int partIdx = 0;
-		parts[partIdx] = 0;
-		while (++spaceIdx < fen.size()) {
-			if (fen.at(spaceIdx) != ' ') continue;
-			parts[++partIdx] = spaceIdx;
-		}
+		std::vector<std::string> tokens;
+		std::regex re("\\S+");
+		std::sregex_token_iterator begin(fen.begin(), fen.end(), re), end;
+		std::copy(begin, end, std::back_inserter(tokens));
 
 		// Set up pieces
 		Square squareIdx = 63;
-		for (int fenIdx = parts[0]; fenIdx < parts[1]; fenIdx++) {
+		for (int i = 0; i < tokens[0].size(); i++) {
 			// skip slashes
-			if (fen.at(fenIdx) == '/') {
+			if (tokens[0].at(i) == '/') {
 				continue;
 			}
 
 			// handle digit
-			if (isdigit(fen.at(fenIdx))) {
-				squareIdx -= fen.at(fenIdx) - '0';
+			if (isdigit(tokens[0].at(i))) {
+				squareIdx -= tokens[0].at(i) - '0';
 				continue;
 			}
 
 			// get piece char as Piece Type
 			Piece p = Piece::WhiteNULL;
-			for (auto& i : board.PieceChars) {
-				if (i.second == fen.at(fenIdx)) {
-					p = i.first;
+			for (auto& piecechar : board.PieceChars) {
+				if (piecechar.second == tokens[0].at(i)) {
+					p = piecechar.first;
 					break;
 				}
 			}
@@ -471,8 +466,7 @@ finish:
 		}
 
 		// turn
-		str = fen.substr(parts[1], parts[2] - parts[1]);
-		if (str.find('w') != std::string::npos) {
+		if (tokens[1].find('w') != std::string::npos) {
 			board.SetTurn(Color::White);
 		}
 		else {
@@ -480,31 +474,24 @@ finish:
 		}
 
 		// castling
-		str = fen.substr(parts[2], parts[3] - parts[2]);
-		if (str.find('K') != std::string::npos) board.SetKingCastlingRights(Color::White, true);
-		if (str.find('Q') != std::string::npos) board.SetQueenCastlingRights(Color::White, true);
-		if (str.find('k') != std::string::npos) board.SetKingCastlingRights(Color::Black, true);
-		if (str.find('q') != std::string::npos) board.SetQueenCastlingRights(Color::Black, true);
+		if (tokens[2].find('K') != std::string::npos) board.SetKingCastlingRights(Color::White, true);
+		if (tokens[2].find('Q') != std::string::npos) board.SetQueenCastlingRights(Color::White, true);
+		if (tokens[2].find('k') != std::string::npos) board.SetKingCastlingRights(Color::Black, true);
+		if (tokens[2].find('q') != std::string::npos) board.SetQueenCastlingRights(Color::Black, true);
 
 		// en passant
-		str = fen.substr(parts[3], parts[4] - parts[3]);
-		if (str.find('-') == std::string::npos) {
-			board.SetEnpassant(Misc::ToSquareIndex(&str));
+		if (tokens[3].find('-') == std::string::npos) {
+			board.SetEnpassant(Misc::ToSquareIndex(&tokens[3]));
 		}
 
-		// optional:
-		if (parts[5] >= 0 && parts[5] < fen.size()) {
-			//// ply
-			//str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
-			//board._ply = stoi(str);
+		// plys for 50 move rule
+		if (tokens.size() > 4) {
+			board._plys50 = stoi(tokens[4]);
+		}
 
-			//// move
-			//str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
-			//board._move = stoi(str);
-
-			// plys for 50 move rule
-			str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
-			board._plys50 = stoi(str);
+		if (tokens.size() > 5) {
+			// TODO? 
+			// store move count that the fen gives
 		}
 
 		return board;
