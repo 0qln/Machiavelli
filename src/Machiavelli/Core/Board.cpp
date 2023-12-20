@@ -432,6 +432,7 @@ finish:
 
 	Board::Board()
 	{
+		_ply = 0;
 		_enPassantSquare = -1;
 		_enPassantBitboard = 0;
 		_kingCastle[0] = _kingCastle[1] = false;
@@ -509,13 +510,17 @@ finish:
 
 		// optional:
 		if (parts[5] >= 0 && parts[5] < fen.size()) {
-			// ply
-			str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
-			board._ply = stoi(str);
+			//// ply
+			//str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
+			//board._ply = stoi(str);
 
-			// move
-			str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
-			board._move = stoi(str);
+			//// move
+			//str = fen.substr(parts[5] + 1, fen.size() - parts[5]);
+			//board._move = stoi(str);
+
+			// plys for 50 move rule
+			str = fen.substr(parts[4] + 1, parts[5] - parts[4]);
+			board._plys50 = stoi(str);
 		}
 
 		return board;

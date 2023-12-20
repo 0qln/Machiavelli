@@ -50,7 +50,7 @@ namespace Machiavelli
 
 		int _ply = 0;
 
-		int _move = 0;
+		int _plys50 = 0;
 
 		Color _turn = Color::White;
 
