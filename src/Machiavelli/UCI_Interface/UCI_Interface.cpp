@@ -68,7 +68,11 @@
 			case UCI::Command::POSITION:
 				UCI::ExecuteCommand::Position(GetFen(tokens), GetMoves(tokens), &board);
 				break;
-			
+
+			case UCI::Command::GO:
+				UCI::ExecuteCommand::Go(tokens[1], std::vector<std::string>(tokens.begin() + 2, tokens.end()), &board);
+				break;
+
 			default:
 				break;
 			}

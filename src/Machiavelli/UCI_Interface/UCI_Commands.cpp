@@ -34,4 +34,17 @@ namespace UCI {
 		
 		return true;
 	}
+
+	bool ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board)
+	{
+
+		if (task == "perft") {
+			std::cout << '\n';
+			Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true);
+			std::cout << '\n';
+			return true;
+		}
+
+		return false;
+	}
 }

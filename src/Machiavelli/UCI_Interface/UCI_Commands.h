@@ -10,10 +10,11 @@
 
 namespace UCI {
 	enum Command {
-		POSITION
+		POSITION,
+		GO,
 	};
 
-	Command ParseCommand(const std::string& token);;
+	Command ParseCommand(const std::string& token);
 
 	class ExecuteCommand {
 	public:
@@ -33,5 +34,14 @@ namespace UCI {
 		/// <param name="board"></param>
 		/// <returns>Success</returns>
 		static bool Position(std::string fen, std::vector<std::string> moves, Machiavelli::Board* board);
+
+		/// <summary>
+		/// Start calculating on the current position set up with the "position" command.
+		/// </summary>
+		/// <param name="task"></param>
+		/// <param name="tokens"></param>
+		/// <param name="board"></param>
+		/// <returns></returns>
+		static bool Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board);
 	};
 }
