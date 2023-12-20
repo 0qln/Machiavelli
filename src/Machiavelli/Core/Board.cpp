@@ -390,27 +390,11 @@ finish:
 		return IsInCheck(GetTurn());
 	}
 
-	/// <summary>
-	/// No performance considerations, this is only a temporary solution.
-	/// </summary>
-	/// <returns></returns>
 	bool Board::IsInCheck(Color color)
 	{
-		// Go through all lines the enemy can play 
-		for (auto move : MoveGen::MoveGen(this).GeneratePseudoLegalMoves(Color(!color)))
-		{
-			MakeMove(&move, false);
-
-			// If the king was taken in some line, the site must've been in check
-			if (!BitHelper::CountBits(GetPieceBitboard(PieceType::King) & GetColorBitboard(color))) {
-				UndoMove(&move, false);
-				return true;
-			}
-
-			UndoMove(&move, false);
-		}
-
-		return false;
+		const Bitboard kingLocation = _pieceColors[color] & _pieceTypes[PieceType::King];
+		const Bitboard enemyAttacks = GetAttacks(Color(!color));
+		return enemyAttacks & kingLocation;
 	}
 
 	Bitboard Board::GetCheckBlockades()
