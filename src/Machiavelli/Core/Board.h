@@ -82,24 +82,7 @@ namespace Machiavelli
 		void PrintPieceBitboard(Piece p);
 		void PrintCastlingRights();
 
-		std::map<Piece, char> PieceChars = {
-			std::make_pair(Piece::WhiteNULL,	'.'),
-			std::make_pair(Piece::BlackNULL,	'.'),
-
-			std::make_pair(Piece::WhitePawn,	'P'),
-			std::make_pair(Piece::WhiteKnight,	'N'),
-			std::make_pair(Piece::WhiteBishop,	'B'),
-			std::make_pair(Piece::WhiteRook,	'R'),
-			std::make_pair(Piece::WhiteQueen,	'Q'),
-			std::make_pair(Piece::WhiteKing,	'K'),
-
-			std::make_pair(Piece::BlackPawn,	'p'),
-			std::make_pair(Piece::BlackKnight,	'n'),
-			std::make_pair(Piece::BlackBishop,	'b'),
-			std::make_pair(Piece::BlackRook,	'r'),
-			std::make_pair(Piece::BlackQueen,	'q'),
-			std::make_pair(Piece::BlackKing,	'k'),
-		};
+		static const std::map<Piece, char> PieceChars;
 
 
 		Bitboard GetAttacks(Color color);
@@ -139,6 +122,8 @@ namespace Machiavelli
 
 
 		static Board FromFEN(std::string fen);
+
+		void SetUpFEN(std::string fen);
 
 		Board();
 

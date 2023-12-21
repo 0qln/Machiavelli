@@ -26,6 +26,26 @@
 
 
 namespace Machiavelli {
+
+	const std::map<Piece, char> Board::PieceChars = {
+		std::make_pair(Piece::WhiteNULL,	'.'),
+		std::make_pair(Piece::BlackNULL,	'.'),
+
+		std::make_pair(Piece::WhitePawn,	'P'),
+		std::make_pair(Piece::WhiteKnight,	'N'),
+		std::make_pair(Piece::WhiteBishop,	'B'),
+		std::make_pair(Piece::WhiteRook,	'R'),
+		std::make_pair(Piece::WhiteQueen,	'Q'),
+		std::make_pair(Piece::WhiteKing,	'K'),
+
+		std::make_pair(Piece::BlackPawn,	'p'),
+		std::make_pair(Piece::BlackKnight,	'n'),
+		std::make_pair(Piece::BlackBishop,	'b'),
+		std::make_pair(Piece::BlackRook,	'r'),
+		std::make_pair(Piece::BlackQueen,	'q'),
+		std::make_pair(Piece::BlackKing,	'k'),
+	};
+
 	void Board::MakeMove(const Move* move, bool changeTurn)
 	{
 		const Square from = MoveHelper::GetFrom(move);
@@ -254,7 +274,7 @@ finish:
 			for (File file = FileTable::A; file <= FileTable::H; file++) {
 				int idx = Misc::SquareIndex0(rank, file);
 				auto p = GetPiece(idx);
-				char c = PieceChars[p];
+				char c = PieceChars.at(p);
 				if (/*c == PieceChars[Piece::P_NULL] &&*/
 					BitHelper::GetBit(highlightSquares, &idx)) {
 					c = 'x';
@@ -430,6 +450,14 @@ finish:
 	{
 		Board board;
 
+		board.SetUpFEN(fen);
+
+		return board;
+	}
+
+	// assuming the board is cleared
+	void Board::SetUpFEN(std::string fen) {
+
 		std::vector<std::string> tokens;
 		std::regex re("\\S+");
 		std::sregex_token_iterator begin(fen.begin(), fen.end(), re), end;
@@ -451,7 +479,7 @@ finish:
 
 			// get piece char as Piece Type
 			Piece p = Piece::WhiteNULL;
-			for (auto& piecechar : board.PieceChars) {
+			for (auto& piecechar : PieceChars) {
 				if (piecechar.second == tokens[0].at(i)) {
 					p = piecechar.first;
 					break;
@@ -460,41 +488,39 @@ finish:
 
 			// evaluate
 			int idx = squareIdx ^ 7;
-			board.SetPiece(idx, p);
+			SetPiece(idx, p);
 
 			squareIdx--;
 		}
 
 		// turn
 		if (tokens[1].find('w') != std::string::npos) {
-			board.SetTurn(Color::White);
+			SetTurn(Color::White);
 		}
 		else {
-			board.SetTurn(Color::Black);
+			SetTurn(Color::Black);
 		}
 
 		// castling
-		if (tokens[2].find('K') != std::string::npos) board.SetKingCastlingRights(Color::White, true);
-		if (tokens[2].find('Q') != std::string::npos) board.SetQueenCastlingRights(Color::White, true);
-		if (tokens[2].find('k') != std::string::npos) board.SetKingCastlingRights(Color::Black, true);
-		if (tokens[2].find('q') != std::string::npos) board.SetQueenCastlingRights(Color::Black, true);
+		if (tokens[2].find('K') != std::string::npos) SetKingCastlingRights(Color::White, true);
+		if (tokens[2].find('Q') != std::string::npos) SetQueenCastlingRights(Color::White, true);
+		if (tokens[2].find('k') != std::string::npos) SetKingCastlingRights(Color::Black, true);
+		if (tokens[2].find('q') != std::string::npos) SetQueenCastlingRights(Color::Black, true);
 
 		// en passant
 		if (tokens[3].find('-') == std::string::npos) {
-			board.SetEnpassant(Misc::ToSquareIndex(&tokens[3]));
+			SetEnpassant(Misc::ToSquareIndex(&tokens[3]));
 		}
 
 		// plys for 50 move rule
 		if (tokens.size() > 4) {
-			board._plys50 = stoi(tokens[4]);
+			_plys50 = stoi(tokens[4]);
 		}
 
 		if (tokens.size() > 5) {
 			// TODO? 
 			// store move count that the fen gives
 		}
-
-		return board;
 	}
 
 	void Board::ChangeTurn()

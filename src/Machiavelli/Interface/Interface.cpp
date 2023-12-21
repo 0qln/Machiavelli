@@ -87,7 +87,13 @@ int main(int argc, char** argv)
 			UCI::ExecuteCommand::Uci();
 			continue;
 
+		case UCI::Command::IS_READY:
+			UCI::ExecuteCommand::IsReady();
+			continue;
 
+		case UCI::Command::UCI_NEW_GAME:
+			UCI::ExecuteCommand::UciNewGame(&board);
+			continue;
 
 		case UCI::Command::NONE:
 			goto custom_command;

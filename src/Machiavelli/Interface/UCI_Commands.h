@@ -14,7 +14,9 @@ namespace UCI {
 		POSITION,
 		GO,
 		QUIT,
-		UCI
+		UCI,
+		IS_READY,
+		UCI_NEW_GAME,
 	};
 
 
@@ -65,5 +67,17 @@ namespace UCI {
 		/// 3. Sent 'uciok' response.
 		/// </summary>
 		static void Uci();
+
+		/// <summary>
+		/// Sends "readyok" response.
+		/// </summary>
+		static void IsReady();
+
+		/// <summary>
+		/// Makes preperations for a new game. 
+		/// Expecting to receive a `Position` command shortly after. 
+		/// (Protocol statates that this command should not be relied on tho)
+		/// </summary>
+		static void UciNewGame(Machiavelli::Board* board);
 	};
 }

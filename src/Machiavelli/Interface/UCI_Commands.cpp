@@ -8,7 +8,9 @@ namespace UCI {
 			{ "position", Command::POSITION },
 			{ "go", Command::GO },
 			{ "quit", Command::QUIT },
-			{ "uci", Command::UCI }
+			{ "uci", Command::UCI },
+			{ "isready", Command::IS_READY },
+			{ "ucinewgame", Command::UCI_NEW_GAME },
 		};
 
 		if (map_commands.find(token) == map_commands.end()) {
@@ -20,7 +22,13 @@ namespace UCI {
 	bool ExecuteCommand::Position(std::string fen, std::vector<std::string> moves, Machiavelli::Board* board)
 	{
 		// Set up board
-		*board = Machiavelli::Board::FromFEN(fen);
+		/* Save options, if the minimal work apprach appears to fail. 
+		 * board = Machiavelli::Board::FromFEN(fen);  */
+		
+		 // only need to set up the fen, we can assume that `board` is cleared, because
+		// the gui should always sent Commands::UCI_NEW_GAME to notify a reset, before 
+		// requesting a position to be set up.
+		board->SetUpFEN(fen);
 
 		// Make moves
 		for (auto move : moves) {
@@ -71,5 +79,15 @@ namespace UCI {
 		// TODO: options
 
 		std::cout << "uciok" << '\n';
+	}
+
+	void ExecuteCommand::IsReady()
+	{
+		std::cout << "readyok" << '\n';
+	}
+
+	void ExecuteCommand::UciNewGame(Machiavelli::Board* board)
+	{
+		*board = Machiavelli::Board::Board();
 	}
 }
