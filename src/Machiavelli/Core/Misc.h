@@ -24,7 +24,7 @@ namespace Machiavelli
 	/// Search depth
 	/// </summary>
 	using Depth = int;
-	enum DepthTabe : int {
+	enum DepthTable : int {
 		NONE = 0,
 		MAX = 255,
 	};
