@@ -66,7 +66,7 @@ namespace UCI {
 	void ExecuteCommand::Uci()
 	{
 		std::cout << "id name " << "Machiavelli" << '\n';
-		std::cout << "id author" << "0qln" << '\n';
+		std::cout << "id author " << "0qln" << '\n';
 
 		// TODO: options
 
