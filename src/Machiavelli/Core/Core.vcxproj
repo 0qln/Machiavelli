@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{56372244-1402-4367-8723-aad2106718d0}</ProjectGuid>
+    <ProjectGuid>{f357b8b3-07ca-4993-92dd-035102316626}</ProjectGuid>
     <RootNamespace>Core</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -46,7 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -130,7 +130,6 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,16 +142,19 @@
   <ItemGroup>
     <ClInclude Include="BitHelper.h" />
     <ClInclude Include="Board.h" />
+    <ClInclude Include="Eval.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="MoveGen.h" />
     <ClInclude Include="MoveHelper.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Search.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitHelper.cpp" />
     <ClCompile Include="Board.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Eval.cpp" />
     <ClCompile Include="Misc.cpp" />
     <ClCompile Include="MoveGen.cpp" />
     <ClCompile Include="MoveHelper.cpp" />
@@ -162,6 +164,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Search.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
