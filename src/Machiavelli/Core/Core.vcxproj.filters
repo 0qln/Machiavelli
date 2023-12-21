@@ -21,19 +21,25 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MoveGen.h">
+    <ClInclude Include="BitHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Board.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BitHelper.h">
+    <ClInclude Include="Eval.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MoveGen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="MoveHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Search.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,19 +50,25 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MoveGen.cpp">
+    <ClCompile Include="BitHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Board.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BitHelper.cpp">
+    <ClCompile Include="Eval.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MoveGen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MoveHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Search.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

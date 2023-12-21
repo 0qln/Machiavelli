@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
-    <ProjectGuid>{304668EA-8661-40B6-BE41-4BA932CA89A9}</ProjectGuid>
+    <ProjectGuid>{AE8AB4C5-2DB9-4372-835E-FDD6B4464838}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>UnitTests</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
@@ -169,7 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
-      <Project>{56372244-1402-4367-8723-aad2106718d0}</Project>
+      <Project>{f357b8b3-07ca-4993-92dd-035102316626}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

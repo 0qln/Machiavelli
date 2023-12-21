@@ -5,8 +5,8 @@
 
 namespace Machiavelli
 {
-	class BitHelper
-	{
+    class BitHelper
+    {
     public:
         static void DeactivateBit(Bitboard* board, const Square* squareIdx);
         static void ActivateBit(Bitboard* board, const Square* squareIdx);
@@ -27,6 +27,6 @@ namespace Machiavelli
         static Square MsbIdx(Bitboard board);
         static void PrintBitboard(Bitboard board);
         static std::string ReplaceAll(std::string str, const std::string& from, const std::string& to);
-	};
+    };
 
 }

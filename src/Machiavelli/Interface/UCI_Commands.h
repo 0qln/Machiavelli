@@ -6,15 +6,23 @@
 
 #include "../Core/Board.h"
 
-/// https://gist.github.com/DOBRO/2592c6dad754ba67e6dcaec8c90165bf
 
 namespace UCI {
-	enum Command {
+
+	enum class Command {
+		NONE = -1,
 		POSITION,
 		GO,
 	};
 
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="token"></param>
+	/// <returns>UCI Command if a target was found, else -1.</returns>
 	Command ParseCommand(const std::string& token);
+
 
 	class ExecuteCommand {
 	public:

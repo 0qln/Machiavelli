@@ -5,9 +5,13 @@
 namespace UCI {
 	Command UCI::ParseCommand(const std::string& token) {
 		const std::map<std::string, Command> map_commands = {
-			{ "position", POSITION },
-			{ "go", GO },
+			{ "position", Command::POSITION },
+			{ "go", Command::GO },
 		};
+
+		if (map_commands.find(token) == map_commands.end()) {
+			return Command::NONE;
+		}
 		return map_commands.at(token);
 	}
 
@@ -22,7 +26,7 @@ namespace UCI {
 
 			auto it = std::find_if(plegals.begin(), plegals.end(), [&move](const Machiavelli::Move& m) {
 				return Machiavelli::MoveHelper::ToString(m) == move;
-			});
+				});
 
 			if (it != plegals.end()) {
 				board->MakeMove(&(*it));
@@ -31,7 +35,7 @@ namespace UCI {
 				return false;
 			}
 		}
-		
+
 		return true;
 	}
 
