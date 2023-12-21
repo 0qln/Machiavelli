@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 			continue;
 
 		case UCI::Command::UCI:
-			// pass
+			UCI::ExecuteCommand::Uci();
 			continue;
 
 

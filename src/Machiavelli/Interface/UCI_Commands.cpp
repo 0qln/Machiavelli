@@ -57,8 +57,19 @@ namespace UCI {
 
 		return false;
 	}
+	
 	void ExecuteCommand::Quit()
 	{
 		exit(EXIT_SUCCESS);
+	}
+
+	void ExecuteCommand::Uci()
+	{
+		std::cout << "id name " << "Machiavelli" << '\n';
+		std::cout << "id author" << "0qln" << '\n';
+
+		// TODO: options
+
+		std::cout << "uciok" << '\n';
 	}
 }

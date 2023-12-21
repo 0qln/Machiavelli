@@ -58,5 +58,12 @@ namespace UCI {
 		/// Quit the program as soon as possible.
 		/// </summary>
 		static void Quit();
+
+		/// <summary>
+		/// 1. Identify with 'id' response.
+		/// 2. Notify the GUI of available options with 'option' response.
+		/// 3. Sent 'uciok' response.
+		/// </summary>
+		static void Uci();
 	};
 }
