@@ -23,7 +23,8 @@ namespace Machiavelli
 	/// <summary>
 	/// Search depth
 	/// </summary>
-	enum Depth : int {
+	using Depth = int;
+	enum DepthTabe : int {
 		NONE = 0,
 		MAX = 255,
 	};
@@ -49,6 +50,16 @@ namespace Machiavelli
 	/// Evaluation score for game tree branches
 	/// </summary>
 	using Score = __int32;
+	enum ScoreTable : Score {
+		Infinity = 30000,
+
+		PawnScore = 100,
+		KnightScore = 300,
+		BishopScore = 350,
+		RookScore = 500,
+		QueenScore = 850,
+		KingScore = 9999
+	};
 
 	/// <summary>
 	/// Piece type order; compatible with <see cref="Piece"/> and useful for indexing
