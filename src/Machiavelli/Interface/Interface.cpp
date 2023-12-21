@@ -60,10 +60,6 @@ int main(int argc, char** argv)
 			continue;
 		}
 
-		if (input == "exit") {
-			break;
-		}
-
 		// UCI first: in case of a name collision, UCI should have priority.
 
 		// The UCI protocol demands, that the engine must be responive at 
@@ -82,6 +78,16 @@ int main(int argc, char** argv)
 			engineT = std::thread(UCI::ExecuteCommand::Go, tokens[1], std::vector<std::string>(tokens.begin() + 2, tokens.end()), &board);
 			engineT.detach();
 			continue;
+
+		case UCI::Command::QUIT:
+			UCI::ExecuteCommand::Quit();
+			continue;
+
+		case UCI::Command::UCI:
+			// pass
+			continue;
+
+
 
 		case UCI::Command::NONE:
 			goto custom_command;

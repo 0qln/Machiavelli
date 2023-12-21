@@ -13,6 +13,8 @@ namespace UCI {
 		NONE = -1,
 		POSITION,
 		GO,
+		QUIT,
+		UCI
 	};
 
 
@@ -51,5 +53,10 @@ namespace UCI {
 		/// <param name="board"></param>
 		/// <returns></returns>
 		static bool Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board);
+
+		/// <summary>
+		/// Quit the program as soon as possible.
+		/// </summary>
+		static void Quit();
 	};
 }

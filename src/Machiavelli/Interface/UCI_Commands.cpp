@@ -7,6 +7,8 @@ namespace UCI {
 		const std::map<std::string, Command> map_commands = {
 			{ "position", Command::POSITION },
 			{ "go", Command::GO },
+			{ "quit", Command::QUIT },
+			{ "uci", Command::UCI }
 		};
 
 		if (map_commands.find(token) == map_commands.end()) {
@@ -49,6 +51,14 @@ namespace UCI {
 			return true;
 		}
 
+		if (task == "depth") {
+
+		}
+
 		return false;
+	}
+	void ExecuteCommand::Quit()
+	{
+		exit(EXIT_SUCCESS);
 	}
 }
