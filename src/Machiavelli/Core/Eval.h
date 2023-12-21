@@ -10,6 +10,9 @@ namespace Machiavelli {
 
 		static const Score PieceValues[7];
 
+		// [PieceType] [Eg/Mg] [Square]
+		static const Score PieceSquareTables[7][2][64];
+
 		/// <summary>
 		/// Static position evaluation
 		/// </summary>
