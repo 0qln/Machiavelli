@@ -1,6 +1,11 @@
 #include "UCI_Commands.h"
+
+#include "../Core/Misc.h"
 #include "../Core/MoveHelper.h"
+#include "../Core/Search.h"
+
 #include <iostream>
+
 
 namespace UCI {
 	Command UCI::ParseCommand(const std::string& token) {
@@ -60,7 +65,8 @@ namespace UCI {
 		}
 
 		if (task == "depth") {
-
+			auto depth = std::stoi(tokens[0]);
+			Machiavelli::Search(board).Start(depth);
 		}
 
 		return false;
