@@ -104,11 +104,13 @@ int main(int argc, char** argv)
 		{
 
 		case CUSTOM::Command::STATIC_EVAL:
-			auto turn = Machiavelli::Color::White;
-			if (tokens.size() == 3 && tokens[1] == "color" && tokens[2] == "black")
-				turn = Machiavelli::Color::Black;
-			engineT = std::thread(CUSTOM::ExecuteCommand::StaticEvaluation, &board, turn);
+			engineT = std::thread(CUSTOM::ExecuteCommand::StaticEvaluation, &board, 
+				tokens.size() == 3 && tokens[1] == "color" && tokens[2] == "black" ? Machiavelli::Color::Black : Machiavelli::Color::White);
 			engineT.detach();
+			break;
+
+		case CUSTOM::Command::PHASE:
+			CUSTOM::ExecuteCommand::Phase(&board);
 			break;
 		}
 	}

@@ -10,7 +10,8 @@ namespace CUSTOM {
 
 	enum class Command {
 		NONE = -1,
-		STATIC_EVAL
+		STATIC_EVAL,
+		PHASE,
 	};
 
 
@@ -30,5 +31,11 @@ namespace CUSTOM {
 		/// <param name="c">Relative to what player?</param>
 		/// <param name="board">The current position</param>
 		static void StaticEvaluation(Machiavelli::Board* board, Machiavelli::Color c = Machiavelli::Color::White);
+
+		/// <summary>
+		/// Respond with current phase of the game.
+		/// </summary>
+		/// <param name="board"></param>
+		static void Phase(Machiavelli::Board* board);
 	};
 }

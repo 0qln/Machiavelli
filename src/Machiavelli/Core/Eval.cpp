@@ -4,6 +4,12 @@
 
 namespace Machiavelli {
 
+    const Score StaticEval::PiecePhaseTotal = 24;
+
+    const Score StaticEval::PiecePhaseValues[7]{
+        0, 0, 1, 1, 2, 4, 0
+    };
+
     const Score StaticEval::PieceValues[7]{
         0, 100, 300, 350, 500, 850, 9999
     };
@@ -158,31 +164,70 @@ namespace Machiavelli {
         }
     };
 
+
     Score StaticEval::Evaluate(Board* board, Color color)
+    {
+        return Evaluate(board) * (color == White ? 1 : -1);
+    }
+
+    Score StaticEval::Evaluate(Board* board)
     {
         Score result = 0;
 
-        const Bitboard bb_us = board->GetColorBitboard(color);
-        const Bitboard bb_nus = board->GetColorBitboard(Color(!color));
+        const Bitboard bb_w = board->GetColorBitboard(Color::White);
+        const Bitboard bb_b = board->GetColorBitboard(Color::Black);
 
-        // middle game
+        // MG and EG evaluations
+        Score mg = 0, eg = 0;
         for (int pt = PieceType::Pawn; pt <= PieceType::Queen; pt++) {
             const Bitboard bb_pt = board->GetPieceBitboard(PieceType(pt));
-            Bitboard bb_allies = bb_us & bb_pt, bb_enemies = bb_nus & bb_pt;
+            Bitboard bb_w_pt = bb_w & bb_pt, bb_b_pt = bb_b & bb_pt;
             Square idx;
 
-            while ((idx = BitHelper::PopLsbIdx(&bb_allies)) != 64) 
-                result += PieceValues[pt] + PieceSquareTables[pt][0][idx];
-            
-            while ((idx = BitHelper::PopLsbIdx(&bb_enemies)) != 64) 
-                result -= PieceValues[pt] + PieceSquareTables[pt][0][idx];
+            // PieceEvaluation for whites pieces
+            while ((idx = BitHelper::PopLsbIdx(&bb_w_pt)) != 64) {
+                // MG
+                mg += PieceValues[pt] + PieceSquareTables[pt][0][idx];
+                // EG
+                eg += PieceValues[pt] + PieceSquareTables[pt][1][idx];
+            }
 
-            Bitboard bb_enemies = bb_nus & bb_pt;
+            // Piece Evaluation for blacks pieces
+            // (Indexed is mirrored vertically)
+            while ((idx = BitHelper::PopLsbIdx(&bb_b_pt)) != 64) {
+                // MG
+                mg -= PieceValues[pt] + PieceSquareTables[pt][0][idx ^ 56];
+                // EG
+                eg -= PieceValues[pt] + PieceSquareTables[pt][1][idx ^ 56];
+            }
         }
 
-        // TODO: end game
-
+        // Interpolate between middle and endgame depending on the
+        // current phase of the game.
+        result = PhaseInterpolation(board, mg, eg);
 
         return result;
+    }
+
+    Score StaticEval::PhaseInterpolation(Board* board, Score mg, Score eg) {
+        // Temporary implementation from CPW
+
+        int phase = Phase(board);
+        return ((mg * (256 - phase)) + (eg * phase)) / 256;
+    }
+
+    int StaticEval::Phase(Board* board) {
+        // Temporary implementation from CPW
+
+        int phase = StaticEval::PiecePhaseTotal;
+
+        // Aggregate non-pawn material with their phase values
+        for (int pt = PieceType::Knight; pt <= PieceType::Queen; pt++) {
+            phase -= BitHelper::CountBits(board->GetPieceBitboard(PieceType(pt))) * StaticEval::PiecePhaseValues[pt];
+        }
+
+        phase = (phase * 256 + (StaticEval::PiecePhaseTotal / 2)) / StaticEval::PiecePhaseTotal;
+
+        return phase;
     }
 }

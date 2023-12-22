@@ -9,6 +9,7 @@ namespace CUSTOM {
 	{
 		const std::map<std::string, Command> map_commands = {
 			{ "staticeval", Command::STATIC_EVAL },
+			{ "phase", Command::PHASE },
 		};
 
 		if (map_commands.find(token) == map_commands.end()) {
@@ -22,5 +23,11 @@ namespace CUSTOM {
 	{
 		auto eval = Machiavelli::StaticEval::Evaluate(board, c);
 		std::cout << "Static Evaluation: " << eval << '\n';
+	}
+
+	void ExecuteCommand::Phase(Machiavelli::Board* board)
+	{
+		auto phase = Machiavelli::StaticEval::Phase(board);
+		std::cout << "Phase [0;256]: " << phase << '\n';
 	}
 }
