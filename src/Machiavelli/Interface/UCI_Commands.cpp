@@ -27,13 +27,14 @@ namespace UCI {
 	bool ExecuteCommand::Position(std::string fen, std::vector<std::string> moves, Machiavelli::Board* board)
 	{
 		// Set up board
-		/* Save options, if the minimal work apprach appears to fail. 
-		 * board = Machiavelli::Board::FromFEN(fen);  */
+		/* Save options, if the minimal work apprach appears to fail. */
+		*board = Machiavelli::Board::FromFEN(fen);  
+		/* */
 		
 		 // only need to set up the fen, we can assume that `board` is cleared, because
 		// the gui should always sent Commands::UCI_NEW_GAME to notify a reset, before 
 		// requesting a position to be set up.
-		board->SetUpFEN(fen);
+		/* board->SetUpFEN(fen); */
 
 		// Make moves
 		for (auto move : moves) {
@@ -41,7 +42,7 @@ namespace UCI {
 
 			auto it = std::find_if(plegals.begin(), plegals.end(), [&move](const Machiavelli::Move& m) {
 				return Machiavelli::MoveHelper::ToString(m) == move;
-				});
+			});
 
 			if (it != plegals.end()) {
 				board->MakeMove(&(*it));
