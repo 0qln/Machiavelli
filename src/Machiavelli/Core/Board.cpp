@@ -156,6 +156,11 @@ finish:
 			ChangeTurn();
 		}
 
+		
+		// Update `_isInCheck`-cache
+		UpdateIsInCheck();
+
+
 	  	_boardStates.push_back(&newState);
 	}
 
@@ -302,7 +307,7 @@ finish:
 		_enPassantBitboard = 1ULL << idx;
 	}
 
-	void Board::Print()
+	void Board::PrintBoard()
 	{
 		std::cout << ToString() << '\n';
 	}
@@ -391,6 +396,32 @@ finish:
 		_turn = turn;
 	}
 
+	bool Board::IsInDoubleCheck()
+	{
+		//return _isInDoubleCheck;
+		return false;
+	}
+
+	// UNTESTED
+	void Board::UpdateIsInDoubleCheck()
+	{
+		//const Color color = Color(!_turn);
+		//const Bitboard kingLocation = _pieceColors[_turn] & _pieceTypes[PieceType::King];
+		//int checkers_count = 0;
+
+		//auto pieces = GetColorBitboard(color);
+		//auto square = Square();
+		//while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+		//	if (checkers_count && (checkers_count = MoveGen::MoveGen(this).GenerateAttacks(square, color) & kingLocation)) {
+		//		_isInDoubleCheck = true;
+		//		return;
+		//	}
+		//	else {
+		//		_isInDoubleCheck = false;
+		//	}
+		//}
+	}
+
 	void Board::SetQueenCastlingRights(Color c, bool value)
 	{
 		_queenCastle[c] = value;
@@ -406,16 +437,47 @@ finish:
 		return _turn;
 	}
 
-	bool Board::IsInCheck()
-	{
-		return IsInCheck(GetTurn());
+	Check Board::GetCheck() {
+		return _checkState < 2 ? Check(_checkState) : Check::Double;
 	}
 
-	bool Board::IsInCheck(Color color)
+	bool Board::IsInCheck()
 	{
-		const Bitboard kingLocation = _pieceColors[color] & _pieceTypes[PieceType::King];
-		const Bitboard enemyAttacks = GetAttacks(Color(!color));
-		return enemyAttacks & kingLocation;
+		//return _isInCheck;
+		return false;
+	}
+
+	void Board::UpdateCheck()
+	{
+		const Color color = Color(!_turn);
+		const Bitboard kingLocation = _pieceColors[_turn] & _pieceTypes[PieceType::King];
+
+		auto pieces = GetColorBitboard(color);
+		auto square = Square();
+		_checkState = Check::None;
+		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+			const auto attacks = MoveGen::MoveGen(this).GenerateAttacks(square, color);
+			_checkState += bool(attacks & kingLocation);
+		}
+	}
+
+	void Board::UpdateIsInCheck()
+	{
+		//const Bitboard kingLocation = _pieceColors[_turn] & _pieceTypes[PieceType::King];
+		//const Bitboard enemyAttacks = GetAttacks(Color(!_turn));
+		//_isInCheck = enemyAttacks & kingLocation;
+
+		//const Color color = Color(!_turn);
+		//const Bitboard kingLocation = _pieceColors[_turn] & _pieceTypes[PieceType::King];
+		//auto pieces = GetColorBitboard(color);
+		//auto square = Square();
+		//while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+		//	if (MoveGen::MoveGen(this).GenerateAttacks(square, color) & kingLocation) {
+		//		_isInCheck = true;
+		//		return;
+		//	}
+		//}
+		//_isInCheck = false;
 	}
 
 	Bitboard Board::GetCheckBlockades()
@@ -426,7 +488,7 @@ finish:
 	// TODO
 	Bitboard Board::GetCheckBlockades(Color color)
 	{
-		if (!IsInCheck(color)) {
+		if (!IsInCheck()) {
 			return ~0ULL;
 		}
 	}
@@ -437,6 +499,7 @@ finish:
 
 	Board::Board()
 	{
+		_checkState = Check::None;
 		_ply = 0;
 		_enPassantSquare = -1;
 		_enPassantBitboard = 0;
@@ -521,6 +584,8 @@ finish:
 			// TODO? 
 			// store move count that the fen gives
 		}
+
+		UpdateCheck();
 	}
 
 	void Board::ChangeTurn()

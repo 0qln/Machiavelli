@@ -102,16 +102,72 @@ namespace Machiavelli {
 			_board->UndoMove(&movelist[i]);
 		}
 
-		if (pv) {
-			std::cout << "Nodes searched: " << moveCount << '\n';
-		}
-
 		return moveCount;
 	}
 
 	std::vector<Move> MoveGen::GeneratePseudoLegalMoves()
 	{
 		return GeneratePseudoLegalMoves(_board->GetTurn());
+	}
+
+	/// <summary>
+	/// No performance considerations, this is only a temporary solution.
+	/// </summary>
+	/// <returns></returns>
+	std::vector<Move> MoveGen::GenerateLegalMoves()
+	{
+		std::vector<Move> legals;
+
+
+		auto pseudos = GeneratePseudoLegalMoves();
+
+		for (auto move : pseudos) {
+			 _board->MakeMove(&move, false);
+			 if (!_board->IsInCheck()) legals.push_back(move);
+			 _board->UndoMove(&move, false);
+
+		}
+
+		return legals;
+
+
+
+		// 1. If in check, generate only check blocking moves.
+
+
+		// 2. Don't generate moves for pinned pieces.
+
+
+		// 3. If in double check, generate only valid king moves.
+
+
+	}
+
+	std::vector<Move> MoveGen::GenerateLegalMoves(Color c)
+	{
+		if (_board->IsInCheck()) {
+
+		}
+
+		auto pieces = _board->GetColorBitboard(c);
+		std::vector<Move> movelist = std::vector<Move>::vector();
+
+		auto square = Square(-1);
+		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+			switch (PieceType((_board->GetPiece(square) & Piece::TypeMask) >> 1))
+			{
+			default: throw std::invalid_argument("Invalid piece type");
+			case PT_NULL: break;
+			case Pawn: GeneratePseudoLegalPawnMoves(square, c, &movelist); break;
+			case Knight: GeneratePseudoLegalKnightMoves(square, c, &movelist); break;
+			case Bishop: GeneratePseudoLegalBishopMoves(square, c, &movelist); break;
+			case Rook: GeneratePseudoLegalRookMoves(square, c, &movelist); break;
+			case Queen: GeneratePseudoLegalQueenMoves(square, c, &movelist); break;
+			case King: GeneratePseudoLegalKingMoves(square, c, &movelist); break;
+			}
+		}
+
+		return movelist;
 	}
 
 	std::vector<Move> MoveGen::GeneratePseudoLegalMoves(Color c)
@@ -150,6 +206,10 @@ namespace Machiavelli {
 		case Queen: return GenerateQueenAttacks(idx, us);
 		case King:return  GenerateKingAttacks(idx, us);
 		}
+	}
+
+	void MoveGen::GenerateLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist)
+	{
 	}
 
 	void MoveGen::GeneratePseudoLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist) {
@@ -625,21 +685,5 @@ namespace Machiavelli {
 	}
 
 
-	/// <summary>
-	/// No performance considerations, this is only a temporary solution.
-	/// </summary>
-	/// <returns></returns>
-	std::vector<Move> MoveGen::GenerateLegalMoves()
-	{
-		std::vector<Move> legals;
-
-		for (auto move : GeneratePseudoLegalMoves()) {
-			_board->MakeMove(&move, false);
-			if (!_board->IsInCheck()) legals.push_back(move);
-			_board->UndoMove(&move, false);
-		}
-
-		return legals;
-	}
 
 }

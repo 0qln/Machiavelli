@@ -112,6 +112,14 @@ int main(int argc, char** argv)
 		case CUSTOM::Command::PHASE:
 			CUSTOM::ExecuteCommand::Phase(&board);
 			break;
+
+		case CUSTOM::Command::PRINT_BOARD:
+			CUSTOM::ExecuteCommand::PrintBoard(&board);
+			break;
+
+		case CUSTOM::Command::PRINT_INFO:
+			CUSTOM::ExecuteCommand::PrintInfo(&board, std::vector<std::string>(tokens.begin() + 1, tokens.end()));
+			break;
 		}
 	}
 

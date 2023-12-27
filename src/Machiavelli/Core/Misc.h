@@ -6,6 +6,13 @@
 namespace Machiavelli
 {
 	/// <summary>
+	/// Check degrees
+	/// </summary>
+	enum Check : int {
+		None, Single, Double
+	};
+ 
+	/// <summary>
 	/// <para>64-bit Bitboard</para>
 	/// https://www.chessprogramming.org/Bitboards
 	/// </summary>

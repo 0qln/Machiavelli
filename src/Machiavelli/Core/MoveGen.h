@@ -35,8 +35,13 @@ namespace Machiavelli {
 		std::vector<Move> GeneratePseudoLegalMoves(Color c);
 
 
+		std::vector<Move> GenerateLegalMoves();
+		std::vector<Move> GenerateLegalMoves(Color c);
+
+
 		Bitboard GenerateAttacks(const Square idx, Color us);
 
+		void GenerateLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GeneratePseudoLegalPawnMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		Bitboard GeneratePawnAttacks(const Square idx, Color us);
 
@@ -56,9 +61,6 @@ namespace Machiavelli {
 		
 		void GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		Bitboard GenerateKingAttacks(const Square idx, Color us);
-
-
-		std::vector<Move> GenerateLegalMoves();
 	};
 }
 

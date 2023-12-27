@@ -12,6 +12,8 @@ namespace CUSTOM {
 		NONE = -1,
 		STATIC_EVAL,
 		PHASE,
+		PRINT_BOARD,
+		PRINT_INFO,
 	};
 
 
@@ -37,5 +39,18 @@ namespace CUSTOM {
 		/// </summary>
 		/// <param name="board"></param>
 		static void Phase(Machiavelli::Board* board);
+
+		/// <summary>
+		/// Print the board to the console.
+		/// </summary>
+		/// <param name="board"></param>
+		static void PrintBoard(Machiavelli::Board* board);
+
+		/// <summary>
+		/// Print the board to the console.
+		/// </summary>
+		/// <param name="board"></param>
+		static void PrintInfo(Machiavelli::Board* board, std::vector<std::string> tokens);
+
 	};
 }

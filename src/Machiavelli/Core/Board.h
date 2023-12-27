@@ -61,6 +61,11 @@ namespace Machiavelli
 		Bitboard _pieceColors[2];
 		Bitboard _enPassantBitboard;
 		Square _enPassantSquare;
+		
+		//bool _isInCheck = false, _isInDoubleCheck = false;
+		int _checkState;
+		Bitboard _attacks[2];
+		Bitboard _pinners[2];
 
 		// TODO: Replace with linkedlist-like data structure 
 		std::vector<BoardState> _boardStates;
@@ -69,11 +74,16 @@ namespace Machiavelli
 
 		void SetEnpassant(Square idx);
 
+		void UpdateCheck();
+		void UpdateIsInCheck();
+		void UpdateIsInDoubleCheck();
+
+		void SetPiece(const Square index, const Piece piece);
 
 
 	public:
 
-		void Print();
+		void PrintBoard();
 		void PrintPieceTypeBitboard(PieceType pt);
 		void PrintPieceTypeBitboard(Piece p);
 		void PrintColorBitboard(Color c);
@@ -114,8 +124,10 @@ namespace Machiavelli
 
 
 		bool IsInCheck();
-		bool IsInCheck(Color color);
 
+		bool IsInDoubleCheck();
+
+		Check GetCheck();
 
 		Bitboard GetCheckBlockades();
 		Bitboard GetCheckBlockades(Color color);
@@ -140,8 +152,6 @@ namespace Machiavelli
 
 		Piece GetPiece(const Square index);
 
-
-		void SetPiece(const Square index, const Piece piece);
 
 
 		/// <summary>
