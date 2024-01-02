@@ -58,5 +58,10 @@ namespace CUSTOM {
 			std::cout << "Pinned pieces: " << '\n';
 			Machiavelli::BitHelper::PrintBitboard(board->GetPinnedPieces());
 		}
+
+		if (contains("checkblockades")) {
+			std::cout << "Check blockades: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetCheckBlockades());
+		}
 	}
 }
