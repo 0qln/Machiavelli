@@ -5,6 +5,7 @@
 #include "../Core/Search.h"
 
 #include <iostream>
+#include <chrono>
 
 
 namespace UCI {
@@ -59,14 +60,26 @@ namespace UCI {
 	{
 
 		if (task == "perft") {
-			std::cout << '\n';
-			Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true);
+			using std::chrono::high_resolution_clock;
+			using std::chrono::duration;
+			using std::chrono::milliseconds;
+
+			auto t1 = high_resolution_clock::now();
+			auto moveCount = Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true);
+			auto t2 = high_resolution_clock::now();
+			duration<double, std::milli> ms = t2 - t1;
+
+			std::cout 
+				<< "Searched " << moveCount << " nodes"
+				<< " in " << ms.count() << " ms"
+				<< '\n'; 
 			std::cout << '\n';
 			return true;
 		}
 
 		if (task == "depth") {
 			auto depth = std::stoi(tokens[0]);
+			//Machiavelli::Search(board).NegaMax(depth, -Machiavelli::ScoreTable::Infinity, Machiavelli::ScoreTable::Infinity, Machiavelli::SearchMode::PV);
 			Machiavelli::Search(board).Start(depth);
 		}
 

@@ -7,24 +7,79 @@
 
 namespace Machiavelli {
 
-	enum SearchMode {
+	enum NodeType {
 		NORMAL,
 		PV,
+		ROOT
 	};
 
 	class Search {
 
 	private:
 
+		struct SearchInfo {
+			Move pv = 0;
+			Move* pvLine;
+			Depth depth, pvDepth;
+
+// We need a default constructor.
+#pragma warning (disable : 26495)
+			SearchInfo() 
+			{ }
+#pragma warning (enable : 26495)
+
+			SearchInfo(Depth d) : depth(d), pvDepth(DepthTable::MAX - depth) {
+				// Initialize pv lines
+				pvLine = new Move[pvDepth];
+				for (int i = 0; i < pvDepth; i++)
+					pvLine[i] = 0; // Null Move
+			}
+
+			SearchInfo* Initialize(Depth d) {
+				depth = d;
+				pvDepth = DepthTable::MAX - depth;
+				pvLine = new Move[pvDepth];
+
+				// Initialize pv lines
+				for (int i = 0; i < pvDepth; i++)
+					pvLine[i] = 0; // Null Move
+
+				return this;
+			}
+
+			~SearchInfo() {
+				delete[] pvLine;
+			}
+		};
+
+		struct RootInfo {
+			Score score;
+			Move move;
+
+			RootInfo(Move move) : score(-ScoreTable::Infinity), move(move) 
+			{ }
+		};
+
 		Board* _board;
 
 		// Indexed with depth
-		Move _pv[DepthTable::MAX];
+		SearchInfo _searchCache[DepthTable::MAX];
 
-		const int MULTI_PV = 1;
+		const static int MULTI_PV = 1;
+
+		Depth _maxDepth;
+
+		std::vector<RootInfo> _rootNodes;
+
+
+		void SortRoot();
 
 
 	public:
+
+		
+		~Search();
+
 
 		/// <summary>
 		/// Initiate a search.
@@ -44,6 +99,14 @@ namespace Machiavelli {
 		/// </summary>
 		/// <param name="depth"></param>
 		/// <returns></returns>
-		Score NegaMax(Depth depth, Score alpha, Score beta, SearchMode sm);
+		template <NodeType TNode>
+		Score Negamax(Depth depth, Score alpha, Score beta, SearchInfo* si);
+
+
+		std::string GetPV();
+
+		std::string GetPV(Move* line);
+
+		void UpdatePV(Move* destination, Move pvMove, Move* pvLine, size_t len);
 	};
 }

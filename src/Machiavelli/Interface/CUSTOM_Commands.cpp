@@ -1,5 +1,6 @@
 #include "CUSTOM_Commands.h"
 #include "../Core/Eval.h"
+#include "../Core/BitHelper.h"
 
 #include <iostream>
 
@@ -53,5 +54,9 @@ namespace CUSTOM {
 			std::cout << "Check: " << check_str(board->GetCheck()) << "\n";
 		}
 
+		if (contains("pin")) {
+			std::cout << "Pinned pieces: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPinnedPieces());
+		}
 	}
 }

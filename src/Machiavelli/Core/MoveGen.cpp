@@ -110,45 +110,37 @@ namespace Machiavelli {
 		return GeneratePseudoLegalMoves(_board->GetTurn());
 	}
 
-	/// <summary>
-	/// No performance considerations, this is only a temporary solution.
-	/// </summary>
-	/// <returns></returns>
+
 	std::vector<Move> MoveGen::GenerateLegalMoves()
 	{
 		std::vector<Move> legals;
+		const Color turn = _board->GetTurn();
 
 
-		auto pseudos = GeneratePseudoLegalMoves();
-
-		for (auto move : pseudos) {
-			 _board->MakeMove(&move, false);
-			 if (!_board->IsInCheck()) legals.push_back(move);
-			 _board->UndoMove(&move, false);
-
+		// 1. If in double check, generate only valid king moves.
+		if (_board->GetCheck() == Check::Double) {
+			Square kingIdx = _board->GetPieceBitboard(PieceType::King) & _board->GetColorBitboard(turn);
+			GenerateLegalKingMoves_Check(kingIdx, turn, &legals);
+			return legals;
 		}
 
-		return legals;
+
+		// 2. If in check, generate only check blocking moves.
+		if (_board->GetCheck() == Check::Single) {
+			GenerateLegalMoves_Check(turn, &legals);
+			return legals;
+		}
 
 
-
-		// 1. If in check, generate only check blocking moves.
-
-
-		// 2. Don't generate moves for pinned pieces.
-
-
-		// 3. If in double check, generate only valid king moves.
-
-
+		// 3. If not in check, just don't generate moves for pinned pieces.
+		if (_board->GetCheck() == Check::None) {
+			GenerateLegalMoves(turn, &legals);
+			return legals;
+		}
 	}
 
 	std::vector<Move> MoveGen::GenerateLegalMoves(Color c)
 	{
-		if (_board->IsInCheck()) {
-
-		}
-
 		auto pieces = _board->GetColorBitboard(c);
 		std::vector<Move> movelist = std::vector<Move>::vector();
 
@@ -168,6 +160,47 @@ namespace Machiavelli {
 		}
 
 		return movelist;
+	}
+
+	void MoveGen::GenerateLegalMoves_Check(Color c, std::vector<Move>* movelist)
+	{
+		auto pieces = _board->GetColorBitboard(c);
+		auto square = Square(-1);
+		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+			switch (PieceType((_board->GetPiece(square) & Piece::TypeMask) >> 1))
+			{
+			default: throw std::invalid_argument("Invalid piece type");
+			case PT_NULL: break;
+			case Pawn: GenerateLegalPawnMoves_Check(square, c, movelist); break;
+			case Knight: GenerateLegalKnightMoves_Check(square, c, movelist); break;
+			case Bishop: GenerateLegalBishopMoves_Check(square, c, movelist); break;
+			case Rook: GenerateLegalRookMoves_Check(square, c, movelist); break;
+			case Queen: GenerateLegalQueenMoves_Check(square, c, movelist); break;
+			case King: GenerateLegalKingMoves_Check(square, c, movelist); break;
+			}
+		}
+	}
+
+	void MoveGen::GenerateLegalMoves(Color c, std::vector<Move>* movelist)
+	{
+		auto pieces = _board->GetColorBitboard(c);
+		auto square = Square(-1);
+		while ((square = BitHelper::PopLsbIdx(&pieces)) != 64) {
+			if (_board->GetPinnedPieces() & square) {
+				continue;
+			}
+			switch (PieceType((_board->GetPiece(square) & Piece::TypeMask) >> 1))
+			{
+			default: throw std::invalid_argument("Invalid piece type");
+			case PT_NULL: break;
+			case Pawn: GeneratePseudoLegalPawnMoves(square, c, movelist); break;
+			case Knight: GeneratePseudoLegalKnightMoves(square, c, movelist); break;
+			case Bishop: GeneratePseudoLegalBishopMoves(square, c, movelist); break;
+			case Rook: GeneratePseudoLegalRookMoves(square, c, movelist); break;
+			case Queen: GeneratePseudoLegalQueenMoves(square, c, movelist); break;
+			case King: GeneratePseudoLegalKingMoves(square, c, movelist); break;
+			}
+		}
 	}
 
 	std::vector<Move> MoveGen::GeneratePseudoLegalMoves(Color c)
@@ -296,6 +329,96 @@ namespace Machiavelli {
 			movelist->push_back(MoveHelper::Create(idx, _board->GetEnPassantSquare(), MoveHelper::EN_PASSANT_FLAG));
 		}
 	}
+	void MoveGen::GenerateLegalPawnMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		// Dont move if the pawn is pinned
+		if ((1ULL << idx) & _board->GetPinnedPieces()) {
+			return;
+		}
+
+		Color nus = Color(!us);
+
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+
+		Bitboard enemies = _board->GetColorBitboard(nus);
+		Bitboard friends = _board->GetColorBitboard(us);
+
+		const Square captureLeftIdx = idx + (us == Color::White ? 7 : -9);
+		const Square captureRightIdx = idx + (us == Color::White ? 9 : -7);
+
+		const Rank firstRank = us ? 6 : 1;
+		const Rank lastRank = us ? 1 : 6;
+
+		// Move 1 square forward
+		// We don't need to check wether the pawn is on the last rank or not, which might cause overflow,
+		// as the pawn can never be on the last rank. If it is moved there, it will have to promote.
+		Square forward1Idx = idx + (us ? -8 : 8);
+		Bitboard forward1 = 1ULL << forward1Idx; // By definition this has always only one set bit
+		if (!((enemies | friends) & forward1) && (forward1 & _board->GetCheckBlockades())) {
+			if (rankIdx == lastRank) {
+				// promo
+				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_BISHOP_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_KNIGHT_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_QUEEN_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::PROMOTION_ROOK_FLAG));
+			}
+			else {
+				// normal move
+				movelist->push_back(MoveHelper::Create(idx, forward1Idx, MoveHelper::QUIET_MOVE_FLAG));
+			}
+
+			// Move 2 squares forward
+			// If we can't move forward one square,
+			// we won't be able to move forward two squares.
+			//	=> This is nested inside the `forward1` condition 
+			Square forward2Idx = idx + (us ? -16 : 16);
+			Bitboard forward2 = 1ULL << forward2Idx; // By definition this has always only one set bit
+			if (rankIdx == firstRank && !((enemies | friends) & forward2) && (forward2 & _board->GetCheckBlockades())) {
+				movelist->push_back(MoveHelper::Create(idx, forward2Idx, MoveHelper::DOUBLE_PAWN_PUSH_FLAG));
+			}
+		}
+
+		// Capture left 
+		Bitboard captureLeft = 1ULL << captureLeftIdx;
+		if (fileIdx > 0 && enemies & captureLeft && captureLeft & (_board->GetCheckBlockades() | _board->GetCheckers())) {
+			if (rankIdx == lastRank) {
+				// promo capture
+				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_QUEEN_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_PROMOTION_ROOK_FLAG));
+			}
+			else {
+				// normal capture
+				movelist->push_back(MoveHelper::Create(idx, captureLeftIdx, MoveHelper::CAPTURE_FLAG));
+			}
+		}
+
+		// Capture right
+		Bitboard captureRight = 1ULL << captureRightIdx;
+		if (fileIdx < 7 && enemies & captureRight && captureRight & (_board->GetCheckBlockades() | _board->GetCheckers())) {
+			if (rankIdx == lastRank) {
+				// promo capture
+				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_BISHOP_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_KNIGHT_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_QUEEN_FLAG));
+				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_PROMOTION_ROOK_FLAG));
+			}
+			else {
+				// normal capture
+				movelist->push_back(MoveHelper::Create(idx, captureRightIdx, MoveHelper::CAPTURE_FLAG));
+			}
+		}
+
+		// En passant
+		auto enpassantSqr = _board->GetEnPassantSquare();
+		if ((fileIdx < 7 && (enpassantSqr == captureRightIdx) && captureRight & (_board->GetCheckBlockades() | _board->GetCheckers())) ||	// right
+			(fileIdx > 0 && (enpassantSqr == captureLeftIdx) && captureLeft & (_board->GetCheckBlockades() | _board->GetCheckers()))		// left
+			&& enpassantSqr >= 0) {
+			movelist->push_back(MoveHelper::Create(idx, _board->GetEnPassantSquare(), MoveHelper::EN_PASSANT_FLAG));
+		}
+	}
 	Bitboard MoveGen::GeneratePawnAttacks(const Square idx, Color us)
 	{
 		Bitboard result = 0ULL;
@@ -334,6 +457,57 @@ namespace Machiavelli {
 		auto addMove = [&](int nidx) {
 			Bitboard sqmk = 1ULL << nidx;
 			if (!(friends & sqmk)) {
+				movelist->push_back(MoveHelper::Create(idx, nidx, enemies & sqmk ? MoveHelper::CAPTURE_FLAG : MoveHelper::QUIET_MOVE_FLAG));
+			}
+		};
+
+		// Include typical squares
+		// upper
+		if (rankIdx < 6) {
+			// right 
+			if (fileIdx < 7) addMove(idx + 17);
+			// left
+			if (fileIdx > 0) addMove(idx + 15);
+		}
+		// up
+		if (rankIdx < 7) {
+			// righter
+			if (fileIdx < 6) addMove(idx + 10);
+			// lefter
+			if (fileIdx > 1) addMove(idx + 6);
+		}
+		// lower
+		if (rankIdx > 1) {
+			// left
+			if (fileIdx > 0) addMove(idx - 17);
+			// right
+			if (fileIdx < 7) addMove(idx - 15);
+		}
+		// low
+		if (rankIdx > 0) {
+			// lefter
+			if (fileIdx > 1) addMove(idx - 10);
+			// righter
+			if (fileIdx < 6) addMove(idx - 6);
+		}
+	}
+	void MoveGen::GenerateLegalKnightMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		// Dont move if the knight is pinned
+		if ((1ULL << idx) & _board->GetPinnedPieces()) {
+			return;
+		}
+
+		const auto rankIdx = idx / 8;
+		const auto fileIdx = idx % 8;
+		const auto enemies = _board->GetColorBitboard(Color(!us));
+		const auto friends = _board->GetColorBitboard(us);
+		const auto legal = _board->GetCheckBlockades() | _board->GetCheckers();
+
+		auto addMove = [&](int nidx) {
+			Bitboard sqmk = 1ULL << nidx;
+			if (!(friends & sqmk) && // no ally on sqmk
+				 (legal & sqmk)) { // the move is either check blocking or a capture of a checker
 				movelist->push_back(MoveHelper::Create(idx, nidx, enemies & sqmk ? MoveHelper::CAPTURE_FLAG : MoveHelper::QUIET_MOVE_FLAG));
 			}
 		};
@@ -419,6 +593,25 @@ namespace Machiavelli {
 			movelist->push_back(MoveHelper::Create(idx, square, flag));
 		}
 	}
+	void MoveGen::GenerateLegalBishopMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		// Dont move if the bishop is pinned
+		if ((1ULL << idx) & _board->GetPinnedPieces()) {
+			return;
+		}
+
+		Color nus = Color(!us);
+		Bitboard moves = GeneratePseudoLegalBishopAttacks(idx, us);
+		// If in check, only block or capture the checker
+		moves &= _board->GetCheckers() | _board->GetCheckBlockades();
+		Square square = -1;
+
+		while ((square = BitHelper::PopLsbIdx(&moves)) != 64) {
+			MoveHelper::Flag flag = MoveHelper::QUIET_MOVE_FLAG;
+			if (_board->GetColorBitboard(nus) & (1ULL << square)) { flag = MoveHelper::CAPTURE_FLAG; }
+			movelist->push_back(MoveHelper::Create(idx, square, flag));
+		}
+	}
 	Bitboard MoveGen::GeneratePseudoLegalBishopAttacks(const Square idx, Color us)
 	{
 		Color nus = Color(!us);
@@ -467,6 +660,35 @@ namespace Machiavelli {
 		result |= square;
 
 		return result;
+	}
+	template<CompassRose Direction>
+	inline Bitboard MoveGen::GenerateBishopPin(const Square bishopIdx, const Square kingIdx, Color us)
+	{
+		const Color nus = Color(!us);
+		const Bitboard self = 1ULL << bishopIdx;
+		const int rankIdx = bishopIdx / 8;
+		const int fileIdx = bishopIdx % 8;
+
+		int diagIdx;
+		Bitboard bMask, wMask, mask, selfDivisor, diag;
+		Bitboard result = 0;
+
+		switch (Direction) {
+		case CompassRose::NoEa:
+			// -< Up Right >-
+
+			diagIdx = 7 - rankIdx + fileIdx;
+			diag = DiagMask1[diagIdx];
+			selfDivisor = BitHelper::FromIndex(bishopIdx); // above
+			
+			bMask = _board->GetColorBitboard(nus) & diag & selfDivisor;
+			wMask = (_board->GetColorBitboard(us) >> 9) & (diag & selfDivisor | self);
+			mask = bMask | wMask;
+			mask &= mask - 1; // remove lsb ()
+			result = (0xFFFFFFFFFFFFFFFF >> 63 - BitHelper::LsbIdx(mask)) & diag & selfDivisor;
+
+			return result;
+		}
 	}
 	Bitboard MoveGen::GenerateBishopAttacks(const Square idx, Color us)
 	{
@@ -517,6 +739,25 @@ namespace Machiavelli {
 	{
 		Color nus = Color(!us);
 		Bitboard moves = GeneratePseudoLegalRookAttacks(idx, us);
+		Square square = -1;
+
+		while ((square = BitHelper::PopLsbIdx(&moves)) != 64) {
+			MoveHelper::Flag flag = MoveHelper::QUIET_MOVE_FLAG;
+			if (_board->GetColorBitboard(nus) & (1ULL << square)) { flag = MoveHelper::CAPTURE_FLAG; }
+			movelist->push_back(MoveHelper::Create(idx, square, flag));
+		}
+	}
+	void MoveGen::GenerateLegalRookMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		// Dont move if the rook is pinned
+		if ((1ULL << idx) & _board->GetPinnedPieces()) {
+			return;
+		}
+
+		Color nus = Color(!us);
+		Bitboard moves = GeneratePseudoLegalRookAttacks(idx, us);
+		// If in check, only block or capture the checker
+		moves &= _board->GetCheckers() | _board->GetCheckBlockades();
 		Square square = -1;
 
 		while ((square = BitHelper::PopLsbIdx(&moves)) != 64) {
@@ -606,9 +847,26 @@ namespace Machiavelli {
 
 		return result;
 	}
+	Bitboard MoveGen::GenerateRookRaw(const Square idx)
+	{
+		const int rankIdx = idx / 8;
+		const int fileIdx = idx % 8;
+		const Bitboard self = 1ULL << idx;
+		return (RankMask[rankIdx] | FileMask[fileIdx]) ^ self;
+	}
 
 	void MoveGen::GeneratePseudoLegalQueenMoves(const Square idx, Color us, std::vector<Move>* movelist)
 	{
+		GeneratePseudoLegalBishopMoves(idx, us, movelist);
+		GeneratePseudoLegalRookMoves(idx, us, movelist);
+	}
+	void MoveGen::GenerateLegalQueenMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		// Dont move if the queen is pinned
+		if ((1ULL << idx) & _board->GetPinnedPieces()) {
+			return;
+		}
+
 		GeneratePseudoLegalBishopMoves(idx, us, movelist);
 		GeneratePseudoLegalRookMoves(idx, us, movelist);
 	}
@@ -648,6 +906,96 @@ namespace Machiavelli {
 			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::QUIET_MOVE_FLAG));
 		}
 		while ((square = BitHelper::PopLsbIdx(&attacks)) != 64) {
+			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::CAPTURE_FLAG));
+		}
+
+		// King side castling
+		if (!inCheck && // not in check
+			_board->GetCastlingRights(us, true) && // allwoed castle
+			!((pieces | nusAttacks) & (0x60ULL << us * 56))) // no pieces blocking the way of the rook or king and king wouldn't move through check
+		{
+			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::G), MoveHelper::KING_CASTLE_FLAG));
+		}
+
+		// Queen side castling
+		if (!inCheck && // not in check
+			_board->GetCastlingRights(us, false) && // allowed castle
+			!(pieces & (0xEULL << us * 56)) && // no pieces blocking the way of the rook or king
+			!(nusAttacks & (0xCULL << us * 56))) // king wouldn't move through check
+		{
+			movelist->push_back(MoveHelper::Create(idx, Misc::SquareIndex0(rankIdx, FileTable::C), MoveHelper::QUEEN_CASTLE_FLAG));
+		}
+	}
+	// Not generating castling moves
+	void MoveGen::GenerateLegalKingMoves_Check(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		Color nus = Color(!us);
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+		const Bitboard allies = _board->GetColorBitboard(us);
+		const Bitboard enemies = _board->GetColorBitboard(nus);
+		const Bitboard pieces = allies | enemies;
+		const Bitboard nusAttacks = _board->GetAttacks(nus);
+		const bool inCheck = nusAttacks & (1ULL << idx);
+		Bitboard moves, legalAttacks, result;
+
+		// Create the square of moves
+		auto ranks = RankMask[rankIdx];
+		if (rankIdx < 7) ranks |= RankMask[rankIdx + 1];
+		if (rankIdx > 0) ranks |= RankMask[rankIdx - 1];
+
+		auto files = FileMask[fileIdx];
+		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
+		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
+		
+		result = files & ranks;
+
+		// Exclude allies and the king himself
+		moves = result ^ (result & pieces);
+		legalAttacks = (result & enemies) ^ (result & nusAttacks); // enemies that aren't protected can be captured
+
+		// Add bitboard moves
+		Square square;
+		while ((square = BitHelper::PopLsbIdx(&moves)) != 64) {
+			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::QUIET_MOVE_FLAG));
+		}
+		while ((square = BitHelper::PopLsbIdx(&legalAttacks)) != 64) {
+			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::CAPTURE_FLAG));
+		}
+	}
+	void MoveGen::GenerateLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist)
+	{
+		Color nus = Color(!us);
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+		const Bitboard allies = _board->GetColorBitboard(us);
+		const Bitboard enemies = _board->GetColorBitboard(nus);
+		const Bitboard pieces = allies | enemies;
+		const Bitboard nusAttacks = _board->GetAttacks(nus);
+		const bool inCheck = nusAttacks & (1ULL << idx);
+		Bitboard moves, legalAttacks, result;
+
+		// Create the square of moves
+		auto ranks = RankMask[rankIdx];
+		if (rankIdx < 7) ranks |= RankMask[rankIdx + 1];
+		if (rankIdx > 0) ranks |= RankMask[rankIdx - 1];
+
+		auto files = FileMask[fileIdx];
+		if (fileIdx < 7) files |= FileMask[fileIdx + 1];
+		if (fileIdx > 0) files |= FileMask[fileIdx - 1];
+
+		result = files & ranks;
+
+		// Exclude allies and the king himself
+		moves = result ^ (result & pieces);
+		legalAttacks = (result & enemies) ^ (result & nusAttacks); // enemies that aren't protected can be captured
+
+		// Add bitboard moves
+		Square square;
+		while ((square = BitHelper::PopLsbIdx(&moves)) != 64) {
+			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::QUIET_MOVE_FLAG));
+		}
+		while ((square = BitHelper::PopLsbIdx(&legalAttacks)) != 64) {
 			movelist->push_back(MoveHelper::Create(idx, square, MoveHelper::CAPTURE_FLAG));
 		}
 
