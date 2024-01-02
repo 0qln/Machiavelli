@@ -57,4 +57,106 @@ namespace UnitTests
             Assert::AreEqual(3894594, gen6.Perft(4, printInfo));
         }
     };
+
+
+    TEST_CLASS(Pins) {
+
+        // Rook
+        TEST_METHOD(RookLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/8/8/1R2bk2/8/8/4K3 w - - 0 1");
+            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(RookUnder) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/4k3/8/4b3/8/4R3/K7 w - - 0 1");
+            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(RookRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/8/2k2b1R/8/8/8/K7 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(RookOver) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/6R1/8/8/6b1/8/8/K5k1 w - - 0 1");
+            Assert::AreEqual(1073741824ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+        
+        // Bishop
+        TEST_METHOD(BishopUpLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/3B4/8/5r2/8/7k/8/K7 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(BishopUpRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/4B3/8/2r5/8/k7/8/K7 w - - 0 1");
+            Assert::AreEqual(17179869184ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(BishopDownLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/6k1/5r2/8/3B4/8/3K4 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(BishopDownRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("k7/8/8/3r4/8/5B2/8/4K3 w - - 0 1");
+            Assert::AreEqual(34359738368ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        // Queen
+        TEST_METHOD(QueenLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/8/8/1Q2bk2/8/8/4K3 w - - 0 1");
+            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenUnder) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/4k3/8/4b3/8/4Q3/K7 w - - 0 1");
+            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/8/2k2b1Q/8/8/8/K7 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenOver) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/6Q1/8/8/6b1/8/8/K5k1 w - - 0 1");
+            Assert::AreEqual(1073741824ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+        TEST_METHOD(QueenUpLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/3Q4/8/5r2/8/7k/8/K7 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenUpRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/4Q3/8/2r5/8/k7/8/K7 w - - 0 1");
+            Assert::AreEqual(17179869184ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenDownLeft) {
+            Machiavelli::Board b;
+            b.SetUpFEN("8/8/6k1/5r2/8/3Q4/8/3K4 w - - 0 1");
+            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+
+        TEST_METHOD(QueenDownRight) {
+            Machiavelli::Board b;
+            b.SetUpFEN("k7/8/8/3r4/8/5Q2/8/4K3 w - - 0 1");
+            Assert::AreEqual(34359738368ULL, b.GetPinnedPieces(Machiavelli::Black));
+        }
+    };
 }

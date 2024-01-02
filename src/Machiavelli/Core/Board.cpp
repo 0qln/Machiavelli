@@ -467,30 +467,45 @@ finish:
 			// Update pinned enemies
 			PieceType pt = PieceType(GetPiece(square) >> 1);
 			const auto poss_pinneds = _pieceColors[nus] ^ kingLocationNus;
+			Bitboard other_otherlike, king_otherlike;
+
 			switch (pt) {
 			case PieceType::Rook:
-				const auto rook_rooklike = MoveGen::MoveGen(this).GenerateRookRaw(square);
-				const auto king_rooklike = MoveGen::MoveGen(this).GenerateRookRaw(kingSquareNus);
-				const auto king_rook_view = king_rooklike & rook_rooklike;
-				const auto king_divisor = BitHelper::FromIndex(kingSquareNus);
-				const auto rook_divisor = BitHelper::FromIndex(square);
-				Bitboard divisor = 0;
-				switch (square - kingSquareNus > 0) {
-				case false: divisor = ~king_divisor & rook_divisor; break;
-				case true: divisor = king_divisor & ~rook_divisor; break;
-				}
-				const auto king_rook_between = king_rook_view & divisor;
-				const auto pieces_between = king_rook_between & poss_pinneds;
-				if (BitHelper::CountBits(pieces_between) == 1) 
-					_pinnedPieces[nus] |= pieces_between;				
+				other_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(square);
+				king_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(kingSquareNus);
 				break;
+			case PieceType::Bishop:
+				other_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(square);
+				king_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(kingSquareNus);
+				break;
+			case PieceType::Queen:
+				other_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(square);
+				king_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(kingSquareNus);
+				break;
+			default:
+				continue;
 			}
+
+			const auto king_rook_view = other_otherlike & king_otherlike;
+			const auto king_divisor = BitHelper::FromIndex(kingSquareNus);
+			const auto rook_divisor = BitHelper::FromIndex(square);
+			Bitboard divisor = 0;
+			switch (square - kingSquareNus > 0) {
+			case false: divisor = ~king_divisor & rook_divisor; break;
+			case true: divisor = king_divisor & ~rook_divisor; break;
+			}
+			const auto king_rook_between = king_rook_view & divisor;
+			const auto pieces_between = king_rook_between & poss_pinneds;
+			if (BitHelper::CountBits(pieces_between) == 1)
+				_pinnedPieces[nus] |= pieces_between;
+
+			BitHelper::PrintBitboard(_pinnedPieces[nus]);
 		}
 	}
 
 	Bitboard Board::GetCheckBlockades()
 	{
-		return -1;
+		return _checkBlockades;
 	}
 
 	Bitboard Board::GetPinnedPieces(Color color)
@@ -504,7 +519,7 @@ finish:
 
 	Bitboard Board::GetCheckers() 
 	{
-		return -1;
+		return _checkers;
 	}
 
 	Board::~Board()

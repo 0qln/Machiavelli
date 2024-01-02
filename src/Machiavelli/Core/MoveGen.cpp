@@ -661,6 +661,7 @@ namespace Machiavelli {
 
 		return result;
 	}
+	// TODO
 	template<CompassRose Direction>
 	inline Bitboard MoveGen::GenerateBishopPin(const Square bishopIdx, const Square kingIdx, Color us)
 	{
@@ -733,6 +734,21 @@ namespace Machiavelli {
 		result |= squares & diag2 & selfDivisorUp;
 
 		return result;
+	}
+
+	Bitboard MoveGen::GenerateBishopRaw(const Square idx)
+	{
+		auto rankIdx = idx / 8;
+		auto fileIdx = idx % 8;
+		Bitboard self = 1ULL << idx;
+
+		auto diag1Idx = 7 - rankIdx + fileIdx;
+		Bitboard diag1 = DiagMask1[diag1Idx];
+
+		auto diag2Idx = rankIdx + fileIdx;
+		Bitboard diag2 = DiagMask2[diag2Idx];
+
+		return (diag1 | diag2) ^ self;
 	}
 
 	void MoveGen::GeneratePseudoLegalRookMoves(const Square idx, Color us, std::vector<Move>* movelist)
@@ -873,6 +889,11 @@ namespace Machiavelli {
 	Bitboard MoveGen::GenerateQueenAttacks(const Square idx, Color us)
 	{
 		return GenerateBishopAttacks(idx, us) | GenerateRookAttacks(idx, us);
+	}
+
+	Bitboard MoveGen::GenerateQueenRaw(const Square idx)
+	{
+		return GenerateBishopRaw(idx) | GenerateRookRaw(idx);
 	}
 
 	void MoveGen::GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist)

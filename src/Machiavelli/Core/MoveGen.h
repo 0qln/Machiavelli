@@ -58,6 +58,7 @@ namespace Machiavelli {
 		template <CompassRose Direction>
 		Bitboard GenerateBishopPin(const Square bishopIdx, const Square kingIdx, Color us);
 		Bitboard GenerateBishopAttacks(const Square idx, Color us);
+		Bitboard GenerateBishopRaw(const Square idx);
 		
 		void GeneratePseudoLegalRookMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalRookMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);
@@ -68,6 +69,7 @@ namespace Machiavelli {
 		void GeneratePseudoLegalQueenMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalQueenMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);
 		Bitboard GenerateQueenAttacks(const Square idx, Color us);
+		Bitboard GenerateQueenRaw(const Square idx);
 		
 		void GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalKingMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);
