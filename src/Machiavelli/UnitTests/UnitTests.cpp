@@ -60,103 +60,48 @@ namespace UnitTests
 
 
     TEST_CLASS(Pins) {
-
-        // Rook
-        TEST_METHOD(RookLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/8/8/1R2bk2/8/8/4K3 w - - 0 1");
-            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        void RunRookTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Rook);
         }
 
-        TEST_METHOD(RookUnder) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/4k3/8/4b3/8/4R3/K7 w - - 0 1");
-            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
+        void RunBishopTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Bishop);
         }
 
-        TEST_METHOD(RookRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/8/2k2b1R/8/8/8/K7 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        void RunQueenTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Queen);
         }
 
-        TEST_METHOD(RookOver) {
+        void RunTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::PieceType pieceType) {
             Machiavelli::Board b;
-            b.SetUpFEN("8/6R1/8/8/6b1/8/8/K5k1 w - - 0 1");
-            Assert::AreEqual(1073741824ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-        
-        // Bishop
-        TEST_METHOD(BishopUpLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/3B4/8/5r2/8/7k/8/K7 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+            b.SetUpFEN(fen);
+            Assert::AreEqual(expectedPins, b.GetPinnedPieces(Machiavelli::Black));
         }
 
-        TEST_METHOD(BishopUpRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/4B3/8/2r5/8/k7/8/K7 w - - 0 1");
-            Assert::AreEqual(17179869184ULL, b.GetPinnedPieces(Machiavelli::Black));
+        TEST_METHOD(RookTests) {
+            RunRookTest("8/8/8/8/1R2bk2/8/8/4K3 w - - 0 1", 268435456ULL);
+            RunRookTest("8/8/4k3/8/4b3/8/4R3/K7 w - - 0 1", 268435456ULL);
+            RunRookTest("8/8/8/2k2b1R/8/8/8/K7 w - - 0 1", 137438953472ULL);
+            RunRookTest("8/6R1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL);
         }
 
-        TEST_METHOD(BishopDownLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/6k1/5r2/8/3B4/8/3K4 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
+        TEST_METHOD(BishopTests) {
+            RunBishopTest("8/3B4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL);
+            RunBishopTest("8/4B3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL);
+            RunBishopTest("8/8/6k1/5r2/8/3B4/8/3K4 w - - 0 1", 137438953472ULL);
+            RunBishopTest("k7/8/8/3r4/8/5B2/8/4K3 w - - 0 1", 34359738368ULL);
         }
 
-        TEST_METHOD(BishopDownRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("k7/8/8/3r4/8/5B2/8/4K3 w - - 0 1");
-            Assert::AreEqual(34359738368ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        // Queen
-        TEST_METHOD(QueenLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/8/8/1Q2bk2/8/8/4K3 w - - 0 1");
-            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenUnder) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/4k3/8/4b3/8/4Q3/K7 w - - 0 1");
-            Assert::AreEqual(268435456ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/8/2k2b1Q/8/8/8/K7 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenOver) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/6Q1/8/8/6b1/8/8/K5k1 w - - 0 1");
-            Assert::AreEqual(1073741824ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-        TEST_METHOD(QueenUpLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/3Q4/8/5r2/8/7k/8/K7 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenUpRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/4Q3/8/2r5/8/k7/8/K7 w - - 0 1");
-            Assert::AreEqual(17179869184ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenDownLeft) {
-            Machiavelli::Board b;
-            b.SetUpFEN("8/8/6k1/5r2/8/3Q4/8/3K4 w - - 0 1");
-            Assert::AreEqual(137438953472ULL, b.GetPinnedPieces(Machiavelli::Black));
-        }
-
-        TEST_METHOD(QueenDownRight) {
-            Machiavelli::Board b;
-            b.SetUpFEN("k7/8/8/3r4/8/5Q2/8/4K3 w - - 0 1");
-            Assert::AreEqual(34359738368ULL, b.GetPinnedPieces(Machiavelli::Black));
+        TEST_METHOD(QueenTests) {
+            RunQueenTest("8/8/8/8/1Q2bk2/8/8/4K3 w - - 0 1", 268435456ULL);
+            RunQueenTest("8/8/4k3/8/4b3/8/4Q3/K7 w - - 0 1", 268435456ULL);
+            RunQueenTest("8/8/8/2k2b1Q/8/8/8/K7 w - - 0 1", 137438953472ULL);
+            RunQueenTest("8/6Q1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL);
+            RunQueenTest("8/3Q4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL);
+            RunQueenTest("8/4Q3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL);
+            RunQueenTest("8/8/6k1/5r2/8/3Q4/8/3K4 w - - 0 1", 137438953472ULL);
+            RunQueenTest("k7/8/8/3r4/8/5Q2/8/4K3 w - - 0 1", 34359738368ULL);
         }
     };
+
 }
