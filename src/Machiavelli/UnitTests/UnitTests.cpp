@@ -60,47 +60,69 @@ namespace UnitTests
 
 
     TEST_CLASS(Pins) {
-        void RunRookTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
-            RunTest(fen, expectedPins, Machiavelli::PieceType::Rook);
+        void RunRookTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::Color toTestColor) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Rook, toTestColor);
         }
 
-        void RunBishopTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
-            RunTest(fen, expectedPins, Machiavelli::PieceType::Bishop);
+        void RunBishopTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::Color toTestColor) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Bishop, toTestColor);
         }
 
-        void RunQueenTest(const std::string& fen, Machiavelli::Bitboard expectedPins) {
-            RunTest(fen, expectedPins, Machiavelli::PieceType::Queen);
+        void RunQueenTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::Color toTestColor) {
+            RunTest(fen, expectedPins, Machiavelli::PieceType::Queen, toTestColor);
         }
 
-        void RunTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::PieceType pieceType) {
+        void RunTest(const std::string& fen, Machiavelli::Bitboard expectedPins, Machiavelli::PieceType pieceType, Machiavelli::Color toTestColor) {
             Machiavelli::Board b;
             b.SetUpFEN(fen);
-            Assert::AreEqual(expectedPins, b.GetPinnedPieces(Machiavelli::Black));
+            Assert::AreEqual(expectedPins, b.GetPinnedPieces(toTestColor));
         }
 
         TEST_METHOD(RookTests) {
-            RunRookTest("8/8/8/8/1R2bk2/8/8/4K3 w - - 0 1", 268435456ULL);
-            RunRookTest("8/8/4k3/8/4b3/8/4R3/K7 w - - 0 1", 268435456ULL);
-            RunRookTest("8/8/8/2k2b1R/8/8/8/K7 w - - 0 1", 137438953472ULL);
-            RunRookTest("8/6R1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL);
+            // enemy pins
+            RunRookTest("8/8/8/8/1R2bk2/8/8/4K3 w - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunRookTest("8/8/4k3/8/4b3/8/4R3/K7 w - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunRookTest("8/8/8/2k2b1R/8/8/8/K7 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunRookTest("8/6R1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL, Machiavelli::Color::Black);
+            // ally pins
+            RunRookTest("8/8/8/8/1R2bk2/8/8/4K3 b - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunRookTest("8/8/4k3/8/4b3/8/4R3/K7 b - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunRookTest("8/8/8/2k2b1R/8/8/8/K7 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunRookTest("8/6R1/8/8/6b1/8/8/K5k1 b - - 0 1", 1073741824ULL, Machiavelli::Color::Black);
         }
 
         TEST_METHOD(BishopTests) {
-            RunBishopTest("8/3B4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL);
-            RunBishopTest("8/4B3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL);
-            RunBishopTest("8/8/6k1/5r2/8/3B4/8/3K4 w - - 0 1", 137438953472ULL);
-            RunBishopTest("k7/8/8/3r4/8/5B2/8/4K3 w - - 0 1", 34359738368ULL);
+            // enemy pins
+            RunBishopTest("8/3B4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunBishopTest("8/4B3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL, Machiavelli::Color::Black);
+            RunBishopTest("8/8/6k1/5r2/8/3B4/8/3K4 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunBishopTest("k7/8/8/3r4/8/5B2/8/4K3 w - - 0 1", 34359738368ULL, Machiavelli::Color::Black);
+            // ally pins
+            RunBishopTest("8/3B4/8/5r2/8/7k/8/K7 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunBishopTest("8/4B3/8/2r5/8/k7/8/K7 b - - 0 1", 17179869184ULL, Machiavelli::Color::Black);
+            RunBishopTest("8/8/6k1/5r2/8/3B4/8/3K4 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunBishopTest("k7/8/8/3r4/8/5B2/8/4K3 b - - 0 1", 34359738368ULL, Machiavelli::Color::Black);
         }
 
         TEST_METHOD(QueenTests) {
-            RunQueenTest("8/8/8/8/1Q2bk2/8/8/4K3 w - - 0 1", 268435456ULL);
-            RunQueenTest("8/8/4k3/8/4b3/8/4Q3/K7 w - - 0 1", 268435456ULL);
-            RunQueenTest("8/8/8/2k2b1Q/8/8/8/K7 w - - 0 1", 137438953472ULL);
-            RunQueenTest("8/6Q1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL);
-            RunQueenTest("8/3Q4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL);
-            RunQueenTest("8/4Q3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL);
-            RunQueenTest("8/8/6k1/5r2/8/3Q4/8/3K4 w - - 0 1", 137438953472ULL);
-            RunQueenTest("k7/8/8/3r4/8/5Q2/8/4K3 w - - 0 1", 34359738368ULL);
+            // enemy pins
+            RunQueenTest("8/8/8/8/1Q2bk2/8/8/4K3 w - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/4k3/8/4b3/8/4Q3/K7 w - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/8/2k2b1Q/8/8/8/K7 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/6Q1/8/8/6b1/8/8/K5k1 w - - 0 1", 1073741824ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/3Q4/8/5r2/8/7k/8/K7 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/4Q3/8/2r5/8/k7/8/K7 w - - 0 1", 17179869184ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/6k1/5r2/8/3Q4/8/3K4 w - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("k7/8/8/3r4/8/5Q2/8/4K3 w - - 0 1", 34359738368ULL, Machiavelli::Color::Black);
+            // ally pins
+            RunQueenTest("8/8/8/8/1Q2bk2/8/8/4K3 b - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/4k3/8/4b3/8/4Q3/K7 b - - 0 1", 268435456ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/8/2k2b1Q/8/8/8/K7 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/6Q1/8/8/6b1/8/8/K5k1 b - - 0 1", 1073741824ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/3Q4/8/5r2/8/7k/8/K7 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/4Q3/8/2r5/8/k7/8/K7 b - - 0 1", 17179869184ULL, Machiavelli::Color::Black);
+            RunQueenTest("8/8/6k1/5r2/8/3Q4/8/3K4 b - - 0 1", 137438953472ULL, Machiavelli::Color::Black);
+            RunQueenTest("k7/8/8/3r4/8/5Q2/8/4K3 b - - 0 1", 34359738368ULL, Machiavelli::Color::Black);
         }
     };
 
