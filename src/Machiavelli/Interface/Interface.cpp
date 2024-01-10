@@ -7,6 +7,7 @@
 #include <iterator>
 #include <regex>
 #include <thread>
+#include <optional>
 
 #include "../Core/Board.h"
 #include "../Core/MoveGen.h"
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
 {
 	std::string input;
 	Machiavelli::Board board;
-
+	std::optional<Machiavelli::SearchCancelationToken*> cancelationToken;
 
 	while (true) {
 		std::getline(std::cin, input);
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
 			continue;
 
 		case UCI::Command::GO:
-			engineT = std::thread(UCI::ExecuteCommand::Go, tokens[1], std::vector<std::string>(tokens.begin() + 2, tokens.end()), &board);
+			engineT = std::thread(UCI::ExecuteCommand::Go, tokens[1], std::vector<std::string>(tokens.begin() + 2, tokens.end()), &board, &cancelationToken);
 			engineT.detach();
 			continue;
 
@@ -93,6 +94,10 @@ int main(int argc, char** argv)
 
 		case UCI::Command::UCI_NEW_GAME:
 			UCI::ExecuteCommand::UciNewGame(&board);
+			continue;
+
+		case UCI::Command::STOP:
+			UCI::ExecuteCommand::Stop(&board, cancelationToken);
 			continue;
 
 		case UCI::Command::NONE:

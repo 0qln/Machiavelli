@@ -16,6 +16,7 @@ namespace UCI {
 			{ "uci", Command::UCI },
 			{ "isready", Command::IS_READY },
 			{ "ucinewgame", Command::UCI_NEW_GAME },
+			{ "stop", Command::STOP },
 		};
 
 		if (map_commands.find(token) == map_commands.end()) {
@@ -55,11 +56,12 @@ namespace UCI {
 		return true;
 	}
 
-	std::optional<Machiavelli::SearchCancelationToken> ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board)
+	void ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board, std::optional<Machiavelli::SearchCancelationToken*>* callersCancelationToken)
 	{
 		auto contains = [tokens](std::string value) { return std::find(tokens.begin(), tokens.end(), value) != tokens.end(); };
 
 		Machiavelli::Depth depth = Machiavelli::DepthTable::NONE;
+		std::optional<Machiavelli::SearchCancelationToken*> result;
 
 		if (task == "depth") {
 			depth = std::stoi(tokens[0]);
@@ -88,15 +90,19 @@ namespace UCI {
 				<< '\n'; 
 
 			// No search started -> Return no cancelation token.
-			return std::optional<Machiavelli::SearchCancelationToken>();
+			callersCancelationToken = &result;
+			return;
 		}
 
 		// Initialize and start the search.
 		auto search = Machiavelli::Search(board);
-		search.Start(depth);
 		
 		// Return the cancelation token.
-		return std::optional<Machiavelli::SearchCancelationToken>(search.CancelationToken);
+		result.emplace(&search.CancelationToken);
+		callersCancelationToken = &result;
+
+		// Start the calculation.
+		search.Start(depth);
 	}
 	
 	void ExecuteCommand::Quit()
@@ -122,5 +128,11 @@ namespace UCI {
 	void ExecuteCommand::UciNewGame(Machiavelli::Board* board)
 	{
 		*board = Machiavelli::Board::Board();
+	}
+	void ExecuteCommand::Stop(Machiavelli::Board* board, std::optional<Machiavelli::SearchCancelationToken*> cancelationToken)
+	{
+		if (cancelationToken.has_value()) {
+			cancelationToken.value()->ShouldStop = true;
+		}
 	}
 }

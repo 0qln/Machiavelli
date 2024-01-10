@@ -66,6 +66,7 @@ namespace Machiavelli {
 		newState.kingCastle[Color::Black] = _kingCastle[Color::Black];
 		newState.queenCastle[Color::White] = _queenCastle[Color::White];
 		newState.queenCastle[Color::Black] = _queenCastle[Color::Black];
+		newState.possibleEnPassantCapture = _enPassantSquare;
 
 		// remove old en passant
 		ResetEnpassant();
@@ -174,7 +175,7 @@ finish:
 		Square capturedIdx = to;
 		const int fRankIdx = from / 8;
 		const Color us = Color(GetPiece(to) & Piece::ColorMask);
-
+		
 		switch (MoveHelper::GetFlag(move))
 		{
 		case MoveHelper::KING_CASTLE_FLAG:
@@ -205,11 +206,12 @@ finish:
 
 		case MoveHelper::EN_PASSANT_FLAG:
 			capturedPiece = Piece(!us | (PieceType::Pawn << 1));
-			capturedIdx = to + (us * 2 - 1) * 8;
+			capturedIdx += (us * 2 - 1) * 8;
 			break;
 
 		case MoveHelper::DOUBLE_PAWN_PUSH_FLAG:
-			SetEnpassant(to + (us * 2 - 1) * 8);
+			ResetEnpassant();
+			break;
 		}
 
 		// Move piece
@@ -217,7 +219,10 @@ finish:
 		SetPiece(capturedIdx, capturedPiece);
 		SetPiece(from, movingPiece);
 
-finish:
+	finish:
+		// readd possible en passant capture of prev. state
+		SetEnpassant(currentState.possibleEnPassantCapture);
+		
 		// castling rights
 		_kingCastle[0] = currentState.kingCastle[0];
 		_kingCastle[1] = currentState.kingCastle[1];

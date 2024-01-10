@@ -107,6 +107,7 @@ namespace Machiavelli {
 				else 
 					// Output custom format
 					std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+
 			}
 			moveCount += count;
 			_board->UndoMove(&movelist[i]);

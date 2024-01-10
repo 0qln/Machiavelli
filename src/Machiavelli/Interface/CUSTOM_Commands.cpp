@@ -74,5 +74,44 @@ namespace CUSTOM {
 			std::cout << "Check blockades: " << '\n';
 			Machiavelli::BitHelper::PrintBitboard(board->GetCheckBlockades());
 		}
+
+		if (all || contains("attacks")) {
+			std::cout << "Attacks [White]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetAttacks(Machiavelli::White));
+			std::cout << "Attacks [Black]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetAttacks(Machiavelli::Black));
+		}
+
+		if (all || contains("pieces")) {
+			std::cout << "Pieces [White]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetColorBitboard(Machiavelli::White));
+			std::cout << "Pieces [Black]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetColorBitboard(Machiavelli::Black));
+		}
+
+		if (all || contains("piecetypes")) {
+			std::cout << "Pieces [Pawn]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::Pawn));
+			std::cout << "Pieces [Knight]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::Knight));
+			std::cout << "Pieces [Bishop]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::Bishop));
+			std::cout << "Pieces [Rook]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::Rook));
+			std::cout << "Pieces [Queen]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::Queen));
+			std::cout << "Pieces [King]: " << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetPieceBitboard(Machiavelli::King));
+		}
+
+		if (all || contains("statecache")) {
+
+		}
+
+		if (all || contains("enpassant")) {
+			std::cout << "Possible en passant capture: " << '\n';
+			std::cout << Machiavelli::Misc::FromSquareIndex(board->GetEnPassantSquare()) << '\n';
+			Machiavelli::BitHelper::PrintBitboard(board->GetEnPassantBitboard());
+		}
 	}
 }

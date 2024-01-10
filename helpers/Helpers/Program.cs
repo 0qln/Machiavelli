@@ -7,9 +7,8 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        //PerftComparison();
-        //Console.Read();
-
+        PerftComparison();
+        /*
         PsqtExtract(@"        // Pawns
         {
             {
@@ -154,6 +153,8 @@ internal class Program
             }
         }
 ");
+        */
+        Console.Read();
     }
 
     private static void PsqtExtract(string data)
@@ -180,24 +181,39 @@ internal class Program
 
     private static void PerftComparison()
     {
-        var current = File.ReadAllText(@"../../../InputData/PerftComparison/current.txt");
-        var expected = File.ReadAllText(@"../../../InputData/PerftComparison/expected.txt");
+        var (current, expected) = (File.ReadAllText(@"../../../InputData/PerftComparison/current.txt"), File.ReadAllText(@"../../../InputData/PerftComparison/expected.txt"));
 
         Dictionary<string, int> ProcessData(string data)
         {
+            var (rName, rCount) = ("", "");
+
+            if (data.Contains("info"))
+            {
+                // UCI-formatted 
+                // <info currmove b1c3 nodes 20>
+                rName = @"(?<=currmove )\S+";
+                rCount = @"(?<=nodes )\d+";
+            }
+            else
+            {
+                // Custom-formatted, probably stockfish notation
+                // <b1c3: 20>
+                rName = @"^[a-z1-8]+";
+                rCount = @"(?<=\: )[0-9]+";
+            }
+
             return data
                 .Split("\n")
                 .Select(x => new KeyValuePair<string, int>(
-                    key: Regex.Match(x, @"^[a-z1-8]+").Value,
-                    value: int.Parse(Regex.Match(x, @"(?<=\: )[0-9]+").Value)
+                    key: Regex.Match(x, rName).Value,
+                    value: int.Parse(Regex.Match(x, rCount).Value)
                 ))
                 .ToDictionary();
         }
 
         Console.WriteLine("PERFT COMPARISON");
 
-        var processed1 = ProcessData(current);
-        var processed2 = ProcessData(expected);
+        var (processed1, processed2) = (ProcessData(current), ProcessData(expected));
 
         // Compare the key existances
         foreach (var kvp in processed1)

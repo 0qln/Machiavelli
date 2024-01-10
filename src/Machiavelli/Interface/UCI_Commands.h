@@ -19,6 +19,7 @@ namespace UCI {
 		UCI,
 		IS_READY,
 		UCI_NEW_GAME,
+		STOP
 	};
 
 
@@ -56,7 +57,7 @@ namespace UCI {
 		/// <param name="tokens"></param>
 		/// <param name="board"></param>
 		/// <returns></returns>
-		static std::optional<Machiavelli::SearchCancelationToken> Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board);
+		static void Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board, std::optional<Machiavelli::SearchCancelationToken*>* outCancelationToken);
 
 		/// <summary>
 		/// Quit the program as soon as possible.
@@ -81,5 +82,7 @@ namespace UCI {
 		/// (Protocol statates that this command should not be relied on tho)
 		/// </summary>
 		static void UciNewGame(Machiavelli::Board* board);
+
+		static void Stop(Machiavelli::Board* board, std::optional<Machiavelli::SearchCancelationToken*> cancelationToken);
 	};
 }

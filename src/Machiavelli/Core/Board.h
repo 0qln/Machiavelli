@@ -21,10 +21,10 @@ namespace Machiavelli
 		int ply;
 		bool kingCastle[2];
 		bool queenCastle[2];
-
+		Square possibleEnPassantCapture;
 
 		BoardState() 
-			: ply(0), move(0), capturedSquare(0), capturedPiece(Piece(0)) { 
+			: ply(0), move(0), capturedSquare(0), capturedPiece(Piece(0)), possibleEnPassantCapture(-1) { 
 			kingCastle[0] = kingCastle[1] = false;
 			queenCastle[0] = queenCastle[1] = false;
 		}
@@ -38,6 +38,7 @@ namespace Machiavelli
 			move = original->move;
 			capturedPiece = original->capturedPiece;
 			capturedSquare = original->capturedSquare;
+			possibleEnPassantCapture = original->possibleEnPassantCapture;
 		}
 		
 		~BoardState() { }
