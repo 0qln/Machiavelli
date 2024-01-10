@@ -87,7 +87,7 @@ namespace Machiavelli {
 	}
 
 
-	int MoveGen::Perft(int depth, bool pv, bool UCI)
+	int MoveGen::Perft(int depth, const bool pv, const bool uci)
 	{
 		if (depth == 0)
 			return 1;
@@ -96,19 +96,17 @@ namespace Machiavelli {
 		auto movelist = GenerateLegalMovesConfident();
 		for (int i = 0; i < movelist.size(); i++) {
 			_board->MakeMove(&movelist[i]);
-			int count = Perft(depth - 1, false, UCI);
+			int count = Perft(depth - 1, false, uci);
 			if (pv) {
-				if (UCI) 
+				if (uci) 
 					// Output using the `info` response format
 					std::cout << "info"
 						<< " currmove " << MoveHelper::ToString(movelist[i])
 						<< " nodes " << count
 						<< '\n';
-				
 				else 
 					// Output custom format
 					std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
-				
 			}
 			moveCount += count;
 			_board->UndoMove(&movelist[i]);

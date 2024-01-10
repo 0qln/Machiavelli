@@ -29,7 +29,9 @@ namespace Machiavelli {
 		MoveGen(Board* b);
 		~MoveGen();
 
-		int Perft(int dpeth, bool pv, bool UCI);
+		// Getting some weird linker error with this:
+		/* template <bool PV, bool UCI */
+		int Perft(int dpeth, bool pv, bool uci);
 
 		std::vector<Move> GeneratePseudoLegalMoves();
 		std::vector<Move> GeneratePseudoLegalMoves(Color c);

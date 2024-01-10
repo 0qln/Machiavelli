@@ -57,6 +57,8 @@ namespace UCI {
 
 	std::optional<Machiavelli::SearchCancelationToken> ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board)
 	{
+		auto contains = [tokens](std::string value) { return std::find(tokens.begin(), tokens.end(), value) != tokens.end(); };
+
 		Machiavelli::Depth depth = Machiavelli::DepthTable::NONE;
 
 		if (task == "depth") {
@@ -71,8 +73,10 @@ namespace UCI {
 			using std::chrono::duration;
 			using std::chrono::milliseconds;
 
+			const bool uci = contains("uci");
+
 			auto t1 = high_resolution_clock::now();
-			auto moveCount = Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true, true);
+			auto moveCount = Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true, uci);
 			auto t2 = high_resolution_clock::now();
 			duration<double, std::milli> ms = t2 - t1;
 
