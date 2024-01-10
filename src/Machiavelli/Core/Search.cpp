@@ -71,7 +71,7 @@ namespace Machiavelli {
 	Search::Search(Board* board)
 	{
 		_board = board;
-		auto moves = MoveGen::MoveGen(_board).GenerateLegalMoves();
+		auto moves = MoveGen::MoveGen(_board).GenerateLegalMovesConfident();
 		_maxDepth = DepthTable::NONE;
 		// Fill root nodes with root info
 		std::transform(moves.begin(), moves.end(), std::back_inserter(_rootNodes),
@@ -168,11 +168,12 @@ namespace Machiavelli {
 			return StaticEval::Evaluate(_board, _board->GetTurn());
 		}
 
+
 		// Variables for the recursive search
-		auto moves = MoveGen::MoveGen(_board).GenerateLegalMoves();
+		auto moves = MoveGen::MoveGen(_board).GenerateLegalMovesConfident();
 		if (moves.size() == 0) return 0; // TODO: Return game over evaluation (checkmate|draw) 
 		Score bestScore = alpha;
-		size_t bestMoveIdx = 0, moveCounter = 0;
+		size_t bestMoveIdx = 0;
 
 
 		// TODO: 
@@ -181,7 +182,7 @@ namespace Machiavelli {
 
 
 		// Iterate legal moves
-		for (auto move : moves) {
+		for (size_t moveCounter = 0; moveCounter < moves.size(); ++moveCounter) {
 			// Stop calculation if requested
 			if (CancelationToken.ShouldStop) {
 				// Incomplete searches should not be trusted, thus we return a score
@@ -191,11 +192,10 @@ namespace Machiavelli {
 			}
 
 			// Make move
-			_board->MakeMove(&move);
+			_board->MakeMove(&moves[moveCounter]);
 
 			Score newScore;
-			if (pvNode || 
-				(rootNode && moveCounter < MULTI_PV)) {
+			if (pvNode || (rootNode && moveCounter < MULTI_PV)) {
 				newScore = -Negamax<PV>(depth - 1, -beta, -alpha, si + 1);
 			}
 			else {
@@ -206,9 +206,9 @@ namespace Machiavelli {
 			if (rootNode && !CancelationToken.ShouldStop) {
 				_rootNodes[moveCounter].score = newScore;
 			}
-			
+
 			// Undo move
-			_board->UndoMove(&move);
+			_board->UndoMove(&moves[moveCounter]);
 
 			// Remember best move
 			if (newScore > bestScore) {
@@ -226,8 +226,6 @@ namespace Machiavelli {
 					}
 				}
 			}
-
-			++moveCounter;
 		}
 
 		// Return the evaluation.
