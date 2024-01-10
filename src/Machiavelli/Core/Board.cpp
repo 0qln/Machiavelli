@@ -450,28 +450,28 @@ finish:
 				_checkers |= 1ULL << square;
 				++_checkState;
 				
+#if EXPERIMENTAL
 				// Update possible check blocks, if the enemy on `square` is a sliding piece
 				PieceType pt = PieceType(GetPiece(square) >> 1);
-				Bitboard other_otherlike, king_otherlike;
+				Bitboard king_other_view;
 
-				switch (pt)
-				{
+				std::cout << pt << ", " << square << '\n';
+				std::cout << "// Update check blocks" << '\n';
+
+				switch (pt) {
 				case PieceType::Rook:
-					other_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(square);
-					king_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(kingSquareUs);
+					king_other_view = MoveGen::MoveGen(this).GenerateRookRawConnection(square, kingSquareUs);
 					break;
 				case PieceType::Bishop:
-					other_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(square);
-					king_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(kingSquareUs);
+					king_other_view = MoveGen::MoveGen(this).GenerateBishopRawConnection(square, kingSquareUs);
 					break;
 				case PieceType::Queen:
-					other_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(square);
-					king_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(kingSquareUs);
+					king_other_view = MoveGen::MoveGen(this).GenerateQueenRawConnection(square, kingSquareUs);
 					break;
 				default:
-					goto continue_after_check;
+					continue;
 				}
-				const auto king_other_view = other_otherlike & king_otherlike;
+				BitHelper::PrintBitboard(king_other_view);
 				const auto king_divisor = BitHelper::FromIndex(kingSquareUs);
 				const auto other_divisor = BitHelper::FromIndex(square);
 				Bitboard divisor = 0;
@@ -481,44 +481,55 @@ finish:
 				}
 				const auto king_other_between = king_other_view & divisor;
 				_checkBlockades |= king_other_between;
+#endif
 			}
+
+#if EXPERIMENTAL
 continue_after_check:
 
 			// Update pinned allies
 			PieceType pt = PieceType(GetPiece(square) >> 1);
-			Bitboard other_otherlike, king_otherlike;
+			Bitboard king_other_view;
+
+			std::cout << pt << ", " << square << '\n';
+			std::cout << "// Update pinned allies" << '\n';
 
 			switch (pt) {
 			case PieceType::Rook:
-				other_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(kingSquareUs);
+				king_other_view = MoveGen::MoveGen(this).GenerateRookRawConnection(square, kingSquareUs);
 				break;
 			case PieceType::Bishop:
-				other_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(kingSquareUs);
+				king_other_view = MoveGen::MoveGen(this).GenerateBishopRawConnection(square, kingSquareUs);
 				break;
 			case PieceType::Queen:
-				other_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(kingSquareUs);
+				king_other_view = MoveGen::MoveGen(this).GenerateQueenRawConnection(square, kingSquareUs);
 				break;
 			default:
 				continue;
 			}
-
-			const auto king_rook_view = other_otherlike & king_otherlike;
+			BitHelper::PrintBitboard(king_other_view);
 			const auto king_divisor = BitHelper::FromIndex(kingSquareUs);
+			BitHelper::PrintBitboard(king_divisor);
 			const auto other_divisor = BitHelper::FromIndex(square);
+			BitHelper::PrintBitboard(other_divisor);
 			Bitboard divisor = 0;
 			switch (square - kingSquareUs > 0) {
 			case false: divisor = ~king_divisor & other_divisor; break;
 			case true: divisor = king_divisor & ~other_divisor; break;
 			}
-			const auto king_other_between = king_rook_view & divisor;
+			BitHelper::PrintBitboard(divisor);
+			const auto king_other_between = king_other_view & divisor;
+			BitHelper::PrintBitboard(king_other_between);
 			const auto pieces_between = king_other_between & _pieceColors[us];
-			if (BitHelper::CountBits(pieces_between) == 1)
+			BitHelper::PrintBitboard(pieces_between);
+			if (BitHelper::CountBits(pieces_between) == 1) {
 				_pinnedPieces[us] |= pieces_between;
+			}
+			BitHelper::PrintBitboard(_pinnedPieces[us]);
+#endif
 		}
 
+#if EXPERIMENTAL
 		// Iterate allies
 		square = Square();
 		while ((square = BitHelper::PopLsbIdx(&allies)) != 64) {
@@ -528,26 +539,25 @@ continue_after_check:
 
 			// Update pinned enemies
 			PieceType pt = PieceType(GetPiece(square) >> 1);
-			Bitboard other_otherlike, king_otherlike;
+			Bitboard king_other_view;
+
+			std::cout << pt << ", " << square << '\n';
+			std::cout << "// Update pinned enemies" << '\n';
 
 			switch (pt) {
 			case PieceType::Rook:
-				other_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateRookRaw(kingSquareNus);
+				king_other_view = MoveGen::MoveGen(this).GenerateRookRawConnection(square, kingSquareUs);
 				break;
 			case PieceType::Bishop:
-				other_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateBishopRaw(kingSquareNus);
+				king_other_view = MoveGen::MoveGen(this).GenerateBishopRawConnection(square, kingSquareUs);
 				break;
 			case PieceType::Queen:
-				other_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(square);
-				king_otherlike = MoveGen::MoveGen(this).GenerateQueenRaw(kingSquareNus);
+				king_other_view = MoveGen::MoveGen(this).GenerateQueenRawConnection(square, kingSquareUs);
 				break;
 			default:
 				continue;
 			}
-
-			const auto king_other_view = other_otherlike & king_otherlike;
+			BitHelper::PrintBitboard(king_other_view);
 			const auto king_divisor = BitHelper::FromIndex(kingSquareNus);
 			const auto other_divisor = BitHelper::FromIndex(square);
 			Bitboard divisor = 0;
@@ -560,6 +570,7 @@ continue_after_check:
 			if (BitHelper::CountBits(pieces_between) == 1)
 				_pinnedPieces[nus] |= pieces_between;
 		}
+#endif
 	}
 
 	Bitboard Board::GetCheckBlockades()

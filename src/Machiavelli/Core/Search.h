@@ -13,6 +13,10 @@ namespace Machiavelli {
 		ROOT
 	};
 
+	struct SearchCancelationToken {
+		bool ShouldStop = false;
+	};
+
 	class Search {
 
 	private:
@@ -71,11 +75,12 @@ namespace Machiavelli {
 
 		std::vector<RootInfo> _rootNodes;
 
-
 		void SortRoot();
 
 
 	public:
+
+		SearchCancelationToken CancelationToken;
 
 		
 		~Search();
@@ -102,11 +107,11 @@ namespace Machiavelli {
 		template <NodeType TNode>
 		Score Negamax(Depth depth, Score alpha, Score beta, SearchInfo* si);
 
-
+#pragma region DepricatedPVExtraction
 		std::string GetPV();
 
 		std::string GetPV(Move* line);
+#pragma endregion
 
-		void UpdatePV(Move* destination, Move pvMove, Move* pvLine, size_t len);
 	};
 }

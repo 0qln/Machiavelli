@@ -29,11 +29,12 @@ namespace Machiavelli {
 		MoveGen(Board* b);
 		~MoveGen();
 
-		int Perft(int dpeth, bool pv);
+		int Perft(int dpeth, bool pv, bool UCI);
 
 		std::vector<Move> GeneratePseudoLegalMoves();
 		std::vector<Move> GeneratePseudoLegalMoves(Color c);
 
+		std::vector<Move> GenerateLegalMovesConfident();
 
 		std::vector<Move> GenerateLegalMoves();
 		std::vector<Move> GenerateLegalMoves(Color c);
@@ -58,18 +59,18 @@ namespace Machiavelli {
 		template <CompassRose Direction>
 		Bitboard GenerateBishopPin(const Square bishopIdx, const Square kingIdx, Color us);
 		Bitboard GenerateBishopAttacks(const Square idx, Color us);
-		Bitboard GenerateBishopRaw(const Square idx);
+		Bitboard GenerateBishopRawConnection(const Square idx1, const Square idx2);
 		
 		void GeneratePseudoLegalRookMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalRookMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);
 		Bitboard GeneratePseudoLegalRookAttacks(const Square idx, Color us);
 		Bitboard GenerateRookAttacks(const Square idx, Color us);
-		Bitboard GenerateRookRaw(const Square idx);
+		Bitboard GenerateRookRawConnection(const Square idx, const Square idx2);
 
 		void GeneratePseudoLegalQueenMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalQueenMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);
 		Bitboard GenerateQueenAttacks(const Square idx, Color us);
-		Bitboard GenerateQueenRaw(const Square idx);
+		Bitboard GenerateQueenRawConnection(const Square idx1, const Square idx2);
 		
 		void GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist);
 		void GenerateLegalKingMoves_Check(const Square idx, Color us, std::vector<Move>* movelist);

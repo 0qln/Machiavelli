@@ -2,7 +2,6 @@
 
 #include "../Core/Misc.h"
 #include "../Core/MoveHelper.h"
-#include "../Core/Search.h"
 
 #include <iostream>
 #include <chrono>
@@ -56,8 +55,16 @@ namespace UCI {
 		return true;
 	}
 
-	bool ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board)
+	std::optional<Machiavelli::SearchCancelationToken> ExecuteCommand::Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board)
 	{
+		Machiavelli::Depth depth = Machiavelli::DepthTable::NONE;
+
+		if (task == "depth") {
+			depth = std::stoi(tokens[0]);
+		}
+		else if (task == "infinite") {
+			depth = Machiavelli::DepthTable::MAX;
+		}
 
 		if (task == "perft") {
 			using std::chrono::high_resolution_clock;
@@ -65,25 +72,27 @@ namespace UCI {
 			using std::chrono::milliseconds;
 
 			auto t1 = high_resolution_clock::now();
-			auto moveCount = Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true);
+			auto moveCount = Machiavelli::MoveGen::MoveGen(board).Perft(std::stoi(tokens[0]), true, true);
 			auto t2 = high_resolution_clock::now();
 			duration<double, std::milli> ms = t2 - t1;
 
-			std::cout 
-				<< "Searched " << moveCount << " nodes"
-				<< " in " << ms.count() << " ms"
+			// Give info using the `info` response
+			std::cout << "info" 
+				<< " nodes " << moveCount
+				<< " time " << ms.count()
+				<< " nps " << (moveCount / ms.count()) * 1000
 				<< '\n'; 
-			std::cout << '\n';
-			return true;
+
+			// No search started -> Return no cancelation token.
+			return std::optional<Machiavelli::SearchCancelationToken>();
 		}
 
-		if (task == "depth") {
-			auto depth = std::stoi(tokens[0]);
-			//Machiavelli::Search(board).NegaMax(depth, -Machiavelli::ScoreTable::Infinity, Machiavelli::ScoreTable::Infinity, Machiavelli::SearchMode::PV);
-			Machiavelli::Search(board).Start(depth);
-		}
-
-		return false;
+		// Initialize and start the search.
+		auto search = Machiavelli::Search(board);
+		search.Start(depth);
+		
+		// Return the cancelation token.
+		return std::optional<Machiavelli::SearchCancelationToken>(search.CancelationToken);
 	}
 	
 	void ExecuteCommand::Quit()

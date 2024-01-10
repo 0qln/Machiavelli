@@ -3,8 +3,10 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <optional>
 
 #include "../Core/Board.h"
+#include "../Core/Search.h"
 
 
 namespace UCI {
@@ -54,7 +56,7 @@ namespace UCI {
 		/// <param name="tokens"></param>
 		/// <param name="board"></param>
 		/// <returns></returns>
-		static bool Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board);
+		static std::optional<Machiavelli::SearchCancelationToken> Go(std::string task, std::vector<std::string> tokens, Machiavelli::Board* board);
 
 		/// <summary>
 		/// Quit the program as soon as possible.

@@ -68,13 +68,15 @@ namespace Machiavelli {
 		_board = board;
 		auto moves = MoveGen::MoveGen(_board).GenerateLegalMoves();
 		_maxDepth = DepthTable::NONE;
+		// Fill root nodes with root info
 		std::transform(moves.begin(), moves.end(), std::back_inserter(_rootNodes),
-			[](auto move) { return RootInfo(move); });
-		for (Depth depth = 0; depth < DepthTable::MAX; depth++) 
+			[](auto move) { return RootInfo(move); }
+		);
+		// Fill search cache
+		for (Depth depth = 0; depth < DepthTable::MAX; depth++) {
 			_searchCache[depth].Initialize(depth);
+		}
 	}
-
-
 
 	void Search::Start(Depth final_depth)
 	{
@@ -96,9 +98,10 @@ namespace Machiavelli {
 				<< " bestmove " << MoveHelper::ToString(_rootNodes[0].move)
 				<< '\n'
 				;
-
 		}
 	}
+
+#pragma region DepricatedPVExtraction
 
 	std::string Search::GetPV(Move* line) {
 		std::string pv;
@@ -117,6 +120,8 @@ namespace Machiavelli {
 
 		return pv;
 	}
+
+#pragma endregion
 
 	template <NodeType TNode>
 	Score Search::Negamax(Depth depth, Score alpha, Score beta, SearchInfo* si)

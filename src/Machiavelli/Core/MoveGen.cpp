@@ -87,17 +87,29 @@ namespace Machiavelli {
 	}
 
 
-	int MoveGen::Perft(int depth, bool pv)
+	int MoveGen::Perft(int depth, bool pv, bool UCI)
 	{
 		if (depth == 0)
 			return 1;
 
 		unsigned long long moveCount = 0;
-		auto movelist = GenerateLegalMoves();
+		auto movelist = GenerateLegalMovesConfident();
 		for (int i = 0; i < movelist.size(); i++) {
 			_board->MakeMove(&movelist[i]);
-			int count = Perft(depth - 1, false);
-			if (pv) std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+			int count = Perft(depth - 1, false, UCI);
+			if (pv) {
+				if (UCI) 
+					// Output using the `info` response format
+					std::cout << "info"
+						<< " currmove " << MoveHelper::ToString(movelist[i])
+						<< " nodes " << count
+						<< '\n';
+				
+				else 
+					// Output custom format
+					std::cout << MoveHelper::ToString(movelist[i]) << ": " << count << "\n";
+				
+			}
 			moveCount += count;
 			_board->UndoMove(&movelist[i]);
 		}
@@ -110,6 +122,20 @@ namespace Machiavelli {
 		return GeneratePseudoLegalMoves(_board->GetTurn());
 	}
 
+	std::vector<Move> MoveGen::GenerateLegalMovesConfident() 
+	{
+		auto pseudos = GeneratePseudoLegalMoves();
+		std::vector<Move> legals;
+		const Color turn = _board->GetTurn();
+
+		for (auto move : pseudos) {
+			_board->MakeMove(&move, false);
+			if (_board->GetCheck() == Check::None) legals.push_back(move);
+			_board->UndoMove(&move, false);
+		}
+
+		return legals;
+	}
 
 	std::vector<Move> MoveGen::GenerateLegalMoves()
 	{
@@ -736,19 +762,23 @@ namespace Machiavelli {
 		return result;
 	}
 
-	Bitboard MoveGen::GenerateBishopRaw(const Square idx)
+	Bitboard MoveGen::GenerateBishopRawConnection(const Square idx1, const Square idx2)
 	{
-		auto rankIdx = idx / 8;
-		auto fileIdx = idx % 8;
-		Bitboard self = 1ULL << idx;
+		const Bitboard identity = (1ULL << idx1) | (1ULL << idx2);
 
-		auto diag1Idx = 7 - rankIdx + fileIdx;
-		Bitboard diag1 = DiagMask1[diag1Idx];
+		const int rankIdx1 = idx1 / 8;
+		const int fileIdx1 = idx1 % 8;
+		const int rankIdx2 = idx2 / 8;
+		const int fileIdx2 = idx2 % 8;
 
-		auto diag2Idx = rankIdx + fileIdx;
-		Bitboard diag2 = DiagMask2[diag2Idx];
+		Bitboard diag1_1 = DiagMask1[7 - rankIdx1 + fileIdx1];
+		Bitboard diag2_1 = DiagMask2[rankIdx1 + fileIdx1];
+		Bitboard diag1_2 = DiagMask1[7 - rankIdx2 + fileIdx2];
+		Bitboard diag2_2 = DiagMask2[rankIdx2 + fileIdx2];
 
-		return (diag1 | diag2) ^ self;
+		const Bitboard connections = (diag1_1 & diag2_1) | (diag1_2 & diag2_2);
+
+		return connections/* ^ identity*/;
 	}
 
 	void MoveGen::GeneratePseudoLegalRookMoves(const Square idx, Color us, std::vector<Move>* movelist)
@@ -863,12 +893,13 @@ namespace Machiavelli {
 
 		return result;
 	}
-	Bitboard MoveGen::GenerateRookRaw(const Square idx)
+	Bitboard MoveGen::GenerateRookRawConnection(const Square idx1, const Square idx2)
 	{
-		const int rankIdx = idx / 8;
-		const int fileIdx = idx % 8;
-		const Bitboard self = 1ULL << idx;
-		return (RankMask[rankIdx] | FileMask[fileIdx]) ^ self;
+		const int rankIdx1 = idx1 / 8;
+		const int fileIdx1 = idx1 % 8;
+		const int rankIdx2 = idx2 / 8;
+		const int fileIdx2 = idx2 % 8;
+		return (RankMask[rankIdx1] & RankMask[rankIdx2]) | (FileMask[fileIdx1] & FileMask[fileIdx2]);
 	}
 
 	void MoveGen::GeneratePseudoLegalQueenMoves(const Square idx, Color us, std::vector<Move>* movelist)
@@ -891,9 +922,22 @@ namespace Machiavelli {
 		return GenerateBishopAttacks(idx, us) | GenerateRookAttacks(idx, us);
 	}
 
-	Bitboard MoveGen::GenerateQueenRaw(const Square idx)
+	Bitboard MoveGen::GenerateQueenRawConnection(const Square idx1, const Square idx2)
 	{
-		return GenerateBishopRaw(idx) | GenerateRookRaw(idx);
+		const int rankIdx1 = idx1 / 8;
+		const int fileIdx1 = idx1 % 8;
+		const int rankIdx2 = idx2 / 8;
+		const int fileIdx2 = idx2 % 8;
+
+		Bitboard diag1_1 = DiagMask1[7 - rankIdx1 + fileIdx1];
+		Bitboard diag2_1 = DiagMask2[rankIdx1 + fileIdx1];
+		Bitboard diag1_2 = DiagMask1[7 - rankIdx2 + fileIdx2];
+		Bitboard diag2_2 = DiagMask2[rankIdx2 + fileIdx2];
+
+		return(RankMask[rankIdx1] & RankMask[rankIdx2]) 
+			| (FileMask[fileIdx1] & FileMask[fileIdx2])
+			| (diag1_1 & diag2_1) 
+			| (diag1_2 & diag2_2);
 	}
 
 	void MoveGen::GeneratePseudoLegalKingMoves(const Square idx, Color us, std::vector<Move>* movelist)
