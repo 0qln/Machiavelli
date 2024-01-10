@@ -44,7 +44,10 @@ namespace Machiavelli {
 	/// </summary>
 	void Search::SortRoot()
 	{
-		size_t i, j;
+		// Using size_t does cause an overflow, causing inner loop condition to fail
+		// and eventually crash the program. Altough this only occurs in Debug mode,
+		// we use signed integers here.
+		int i, j;
 
 		for (i = 1; i < _rootNodes.size(); i++) {
 			RootInfo key = _rootNodes[i];
@@ -98,6 +101,11 @@ namespace Machiavelli {
 				<< " bestmove " << MoveHelper::ToString(_rootNodes[0].move)
 				<< '\n'
 				;
+
+			// Stop calculation if requested
+			if (CancelationToken.ShouldStop) {
+				break;
+			}
 		}
 	}
 
@@ -155,7 +163,14 @@ namespace Machiavelli {
 
 		// Iterate legal moves
 		for (auto move : moves) {
-			 
+			// Stop calculation if requested
+			if (CancelationToken.ShouldStop) {
+				// Incomplete searches should not be trusted, thus we return a score
+				// s.d. this node will not be looked considered. All previously
+				// calculated node evaluations will be discarded.
+				return ScoreTable::Infinity;
+			}
+
 			// Make move
 			_board->MakeMove(&move);
 
@@ -169,7 +184,7 @@ namespace Machiavelli {
 			}
 
 			// Update root
-			if (rootNode) {
+			if (rootNode && !CancelationToken.ShouldStop) {
 				_rootNodes[moveCounter].score = newScore;
 			}
 			

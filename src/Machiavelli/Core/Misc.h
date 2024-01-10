@@ -59,6 +59,7 @@ namespace Machiavelli
 	using Score = __int32;
 	enum ScoreTable : Score {
 		Infinity = 30000,
+		Mate = 29500,
 
 		PawnScore = 100,
 		KnightScore = 300,

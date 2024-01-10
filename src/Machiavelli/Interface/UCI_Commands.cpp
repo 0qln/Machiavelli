@@ -61,7 +61,6 @@ namespace UCI {
 		auto contains = [tokens](std::string value) { return std::find(tokens.begin(), tokens.end(), value) != tokens.end(); };
 
 		Machiavelli::Depth depth = Machiavelli::DepthTable::NONE;
-		std::optional<Machiavelli::SearchCancelationToken*> result;
 
 		if (task == "depth") {
 			depth = std::stoi(tokens[0]);
@@ -90,7 +89,7 @@ namespace UCI {
 				<< '\n'; 
 
 			// No search started -> Return no cancelation token.
-			callersCancelationToken = &result;
+			callersCancelationToken->reset();
 			return;
 		}
 
@@ -98,8 +97,7 @@ namespace UCI {
 		auto search = Machiavelli::Search(board);
 		
 		// Return the cancelation token.
-		result.emplace(&search.CancelationToken);
-		callersCancelationToken = &result;
+		callersCancelationToken->emplace(&search.CancelationToken);
 
 		// Start the calculation.
 		search.Start(depth);
