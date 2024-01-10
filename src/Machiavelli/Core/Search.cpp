@@ -6,7 +6,9 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <chrono>
 
+#define BENCHMARK
 
 namespace Machiavelli {
 
@@ -83,6 +85,13 @@ namespace Machiavelli {
 
 	void Search::Start(Depth final_depth)
 	{
+#ifdef BENCHMARK
+		using std::chrono::high_resolution_clock;
+		using std::chrono::duration;
+		using std::chrono::milliseconds;
+		auto begin = high_resolution_clock::now();
+		_nodesSearched = 0;
+#endif
 		final_depth = min(final_depth, DepthTable::MAX);
 
 		for (_maxDepth = 1; _maxDepth <= final_depth; _maxDepth++) {
@@ -96,9 +105,15 @@ namespace Machiavelli {
 			SortRoot();
 
 			// UCI info response
+			duration<double, std::milli> ms = high_resolution_clock::now() - begin;
 			std::cout << "info"
 				<< " depth " << _maxDepth
 				<< " bestmove " << MoveHelper::ToString(_rootNodes[0].move)
+#ifdef BENCHMARK
+				<< " nodes " << _nodesSearched
+				<< " time " << ms.count()
+				<< " nps " << (_nodesSearched / ms.count()) * 1000
+#endif
 				<< '\n'
 				;
 
@@ -134,6 +149,10 @@ namespace Machiavelli {
 	template <NodeType TNode>
 	Score Search::Negamax(Depth depth, Score alpha, Score beta, SearchInfo* si)
 	{
+#ifdef BENCHMARK
+		_nodesSearched++;
+#endif
+
 		const bool pvNode = TNode == NodeType::PV;
 		const bool rootNode = TNode == NodeType::ROOT;
 

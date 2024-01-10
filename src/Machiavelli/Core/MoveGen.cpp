@@ -144,7 +144,7 @@ namespace Machiavelli {
 
 		// 1. If in double check, generate only valid king moves.
 		if (_board->GetCheck() == Check::Double) {
-			Square kingIdx = _board->GetPieceBitboard(PieceType::King) & _board->GetColorBitboard(turn);
+			Square kingIdx = BitHelper::LsbIdx(_board->GetPieceBitboard(PieceType::King) & _board->GetColorBitboard(turn));
 			GenerateLegalKingMoves_Check(kingIdx, turn, &legals);
 			return legals;
 		}

@@ -73,6 +73,8 @@ namespace Machiavelli {
 
 		Depth _maxDepth;
 
+		size_t _nodesSearched;
+
 		std::vector<RootInfo> _rootNodes;
 
 		void SortRoot();
