@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 
@@ -11,10 +12,11 @@ internal class Program
         var Engines = File.ReadAllLines(@"../../../InputData/PerftErrorTrackDown/enginePaths.txt");
 
         await PerftErrorTrackDown(
-            "startposition", 
+            "rnbqkbnr/pppppppp/8/8/8/2P5/PP1PPPPP/RNBQKBNR b KQkq - 0 1", 
             4,
             Engines[0],
-            Engines[1]);
+            Engines[1], 
+            x => x.Contains("Stockfish"));
 
         Console.Read();
     }
@@ -41,46 +43,83 @@ internal class Program
         Array.Reverse(lines);
     }
 
-    private static async Task PerftErrorTrackDown(string fen, int depth, string engine1, string engine2)
+    private static async Task PerftErrorTrackDown(string fen, int depth, string testEngine, string controlEngine, Predicate<string> noiseFilter)
     {
-        List<string> moves = new();
+        Console.WriteLine("Begin Perft error track down...");
+        Console.WriteLine($"Engine 1: {testEngine}");
+        Console.WriteLine($"Engine 2: {controlEngine}");
 
-        while (depth >= 1)
+        List<string> moves = new();
+        PerftError lastError = default;
+
+        string getPositionCommand() => $"position fen {fen} {(moves.Any() ? "moves " + moves.Aggregate((x, y) => x + " " + y) : string.Empty)}";
+        string getPerftCommand(int depth) => $"go perft {depth}";
+
+        while (true)
         {
-            Task result1Task = ExecuteEngineInstance( 
-                engine1, 
-                [ 
-                    $"position {fen} moves {(moves.Any() ? moves.Aggregate((x, y) => x + " " + y) : string.Empty)}",
-                    $"go perft {depth}",
-                ], 
-                @"../../../InputData/PerftComparison/current.txt");
-            Task result2Task = ExecuteEngineInstance(
-                engine2,
-                [
-                    $"position {fen} moves {(moves.Any() ? moves.Aggregate((x, y) => x + " " + y) : string.Empty)}",
-                    $"go perft {depth}",
-                ], 
-                @"../../../InputData/PerftComparison/expected.txt");
+            StringBuilder current = new(), expected = new();
+
+            string position = getPositionCommand();
+            Console.WriteLine($"Searching position: {position}");
+
+            Task 
+                result1Task = ExecuteEnginePerft( 
+                    testEngine,
+                    position,
+                    getPerftCommand(depth),
+                    @"../../../InputData/PerftComparison/current.txt",
+                    current, 
+                    noiseFilter), 
+
+                result2Task = ExecuteEnginePerft(
+                    controlEngine,
+                    position,
+                    getPerftCommand(depth),
+                    @"../../../InputData/PerftComparison/current.txt",
+                    expected,
+                    noiseFilter);
 
             // Wait for both instances to complete
             await Task.WhenAll(result1Task, result2Task);
-            
+
             // Process error
-            var error = GetPerftErrors().FirstOrDefault();
-            if (error == default)
+            Console.WriteLine("Perft outputs: \n");
+            Console.WriteLine("Engine 1: ");
+            Console.WriteLine(current);
+            Console.WriteLine("Engine 2: ");
+            Console.WriteLine(expected);
+            lastError = GetPerftErrors(current.ToString(), expected.ToString()).FirstOrDefault();
+
+            if (--depth < 1)
             {
+                break;
+            }
+
+            if (lastError == default)
+            {
+                Console.WriteLine("No errors detected.");
                 break;
             }
             else
             {
-                moves.Add(error.Current?.move ?? error.Expected?.move ?? throw new ArgumentException("An empty error was received."));
-                Console.WriteLine($"Selected error: {error}");
+                moves.Add(lastError.Current?.move ?? lastError.Expected?.move ?? throw new ArgumentException("An empty error was received."));
+                Console.WriteLine($"Selected error: {lastError}");
                 Console.WriteLine($"Folllowing move: {moves.Last()}");
             }
         }
+
+        Console.WriteLine("\nPerft error track down results:");
+        Console.WriteLine($"Last error: \"{lastError}\"");
+        Console.WriteLine($"In position: \"{getPositionCommand()}\"");
     }
 
-    private static async Task ExecuteEngineInstance(string engine, IEnumerable<string> commands, string outputPath)
+    private static bool IsEndOfPerft(string? s) => s is not null &&
+        (// Custom notation
+        Regex.Match(s, @"Nodes searched: .+").Success ||
+        // UCI notation
+        Regex.Match(s, @"info nodes .+ time .+ nps").Success);
+
+    private static async Task ExecuteEnginePerft(string engine, string position, string perft, string outputPath, StringBuilder resultStream, Predicate<string> noiseFilter)
     {
         // Create a new process start info for PowerShell
         ProcessStartInfo psi = new ProcessStartInfo
@@ -99,76 +138,61 @@ internal class Program
             // Start engine
             powershellProcess.Start();
 
-            // Forward commands
-            foreach (var command in commands)
+            powershellProcess.StandardInput.WriteLine(position);
+
+            powershellProcess.StandardInput.WriteLine(perft);
+
+            string? output;
+            do
             {
-                powershellProcess.StandardInput.WriteLine(command);
+                output = await powershellProcess.StandardOutput.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(output) || noiseFilter(output)) continue;
+                resultStream.AppendLine(output);
             }
-            
-            // Fait for computation to finisih
-            Thread.Sleep(2000);
-            
-            // Close engine
+            while (!IsEndOfPerft(output));
+
             powershellProcess.StandardInput.WriteLine("quit");
 
-            // Read the output
-            string output = await powershellProcess.StandardOutput.ReadToEndAsync();
-            string error = await powershellProcess.StandardError.ReadToEndAsync();
-
-            // Wait for the PowerShell instance to exit
             await powershellProcess.WaitForExitAsync();
-
-            // Handle error from engine
-            if (!string.IsNullOrEmpty(error))
-            {
-                Console.WriteLine($"Error: {error}");
-                throw new Exception(error);
-            }
-            // Save the output
-            else
-            {
-                File.WriteAllText(outputPath, output);
-            }
         }
     }
 
-    private static IEnumerable<PerftError> GetPerftErrors()
+    private static Dictionary<string, int> ProcessData(string data)
     {
-        var (current, expected) = (File.ReadAllText(@"../../../InputData/PerftComparison/current.txt"), File.ReadAllText(@"../../../InputData/PerftComparison/expected.txt"));
+        var (rName, rCount) = ("", "");
 
-        Dictionary<string, int> ProcessData(string data)
+        if (data.Contains("info"))
         {
-            var (rName, rCount) = ("", "");
-
-            if (data.Contains("info"))
-            {
-                // UCI-formatted 
-                // <info currmove b1c3 nodes 20>
-                rName = @"(?<=currmove )\S+";
-                rCount = @"(?<=nodes )\d+";
-            }
-            else
-            {
-                // Custom-formatted, probably stockfish notation
-                // <b1c3: 20>
-                rName = @"^[a-z1-8]+";
-                rCount = @"(?<=\: )[0-9]+";
-            }
-
-            return data
-                .Split("\n")
-                .Select(x => new KeyValuePair<string, int>(
-                    key: Regex.Match(x, rName).Value,
-                    value: int.Parse(Regex.Match(x, rCount).Value)
-                ))
-                .ToDictionary();
+            // UCI-formatted 
+            // <info currmove b1c3 nodes 20>
+            rName = @"(?<=currmove )\S+";
+            rCount = @"(?<=nodes )\d+";
+        }
+        else
+        {
+            // Custom-formatted, probably stockfish notation
+            // <b1c3: 20>
+            rName = @"^[a-z1-8]+";
+            rCount = @"(?<=\: )[0-9]+";
         }
 
-        Console.WriteLine("PERFT COMPARISON");
+        return data
+            .Split("\n")
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => new KeyValuePair<string, int>(
+                key: Regex.Match(x, rName).Value,
+                value: int.Parse(Regex.Match(x, rCount).Value)
+            ))
+            .ToDictionary();
+    }
+
+    private static IEnumerable<PerftError> GetPerftErrors(string current, string expected)
+    {
+        Console.WriteLine("Perft comparison");
 
         var (processed1, processed2) = (ProcessData(current), ProcessData(expected));
 
-        // Compare the key existances
+        // Compare the key existences
         foreach (var kvp in processed1)
         {
             if (!processed2.ContainsKey(kvp.Key))
@@ -204,6 +228,16 @@ internal class Program
         }
 
         Console.WriteLine($"Detected {deltas}/{processed2.Count} value differences.");
+    }
+
+    private static IEnumerable<PerftError> GetPerftErrors()
+    {
+        var (current, expected) = (
+            File.ReadAllText(@"../../../InputData/PerftComparison/current.txt"), 
+            File.ReadAllText(@"../../../InputData/PerftComparison/expected.txt")
+        );
+
+        return GetPerftErrors(current, expected);
     }
 
     record struct PerftError(PerftIndex? Current, PerftIndex? Expected);
