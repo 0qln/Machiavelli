@@ -12,8 +12,8 @@ internal class Program
         var Engines = File.ReadAllLines(@"../../../InputData/PerftErrorTrackDown/enginePaths.txt");
 
         await PerftErrorTrackDown(
-            "rnbqkbnr/pppppppp/8/8/8/2P5/PP1PPPPP/RNBQKBNR b KQkq - 0 1", 
-            4,
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 
+            6,
             Engines[0],
             Engines[1], 
             x => x.Contains("Stockfish"));
@@ -88,7 +88,9 @@ internal class Program
             Console.WriteLine(expected);
             lastError = GetPerftErrors(current.ToString(), expected.ToString()).FirstOrDefault();
 
-            if (--depth < 1)
+            if (--depth < 1
+                || lastError.Expected is null
+                || lastError.Current is null)
             {
                 break;
             }
