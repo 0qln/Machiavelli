@@ -67,7 +67,6 @@ internal class Program
                     testEngine,
                     position,
                     getPerftCommand(depth),
-                    @"../../../InputData/PerftComparison/current.txt",
                     current, 
                     noiseFilter), 
 
@@ -75,7 +74,6 @@ internal class Program
                     controlEngine,
                     position,
                     getPerftCommand(depth),
-                    @"../../../InputData/PerftComparison/current.txt",
                     expected,
                     noiseFilter);
 
@@ -119,18 +117,42 @@ internal class Program
         // UCI notation
         Regex.Match(s, @"info nodes .+ time .+ nps").Success);
 
-    private static async Task ExecuteEnginePerft(string engine, string position, string perft, string outputPath, StringBuilder resultStream, Predicate<string> noiseFilter)
+    private static async Task ExecuteEnginePerft(string engine, string position, string perft, StringBuilder resultStream, Predicate<string> noiseFilter)
     {
         // Create a new process start info for PowerShell
-        ProcessStartInfo psi = new ProcessStartInfo
+        ProcessStartInfo psi;
+
+        if (engine.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
-            FileName = engine,
-            RedirectStandardInput = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = false,
-        };
+            // If the engine is an .exe file
+            psi = new ProcessStartInfo
+            {
+                FileName = engine,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+            };
+        }
+        else if (engine.EndsWith(".jar", StringComparison.OrdinalIgnoreCase))
+        {
+            // If the engine is a .jar file
+            psi = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"java -jar {engine}",
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = false,
+            };
+        }
+        else
+        {
+            throw new ArgumentException("Unsupported engine type. Only .exe and .jar files are supported.");
+        }
 
         // Start the process
         using (Process powershellProcess = new Process { StartInfo = psi })
