@@ -14,6 +14,8 @@ internal class Program
         await PerftErrorTrackDown(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 
             6,
+            null,// "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ", 
+            4,
             Engines[0],
             Engines[1], 
             x => x.Contains("Stockfish"));
@@ -43,7 +45,7 @@ internal class Program
         Array.Reverse(lines);
     }
 
-    private static async Task PerftErrorTrackDown(string fen, int depth, string testEngine, string controlEngine, Predicate<string> noiseFilter)
+    private static async Task PerftErrorTrackDown(string? fen, int depth, string testEngine, string controlEngine, Predicate<string> noiseFilter)
     {
         Console.WriteLine("Begin Perft error track down...");
         Console.WriteLine($"Engine 1: {testEngine}");
@@ -52,8 +54,9 @@ internal class Program
         List<string> moves = new();
         PerftError lastError = default;
 
-        string getPositionCommand() => $"position fen {fen} {(moves.Any() ? "moves " + moves.Aggregate((x, y) => x + " " + y) : string.Empty)}";
-        string getPerftCommand(int depth) => $"go perft {depth}";
+        var getMoves = () => moves.Any() ? $"moves {moves.Aggregate((x, y) => $"{x} {y}")}" : string.Empty;
+        var getPositionCommand = () => fen is not null ? $"position fen {fen} {getMoves()}" : $"position startpos {getMoves()}";
+        var getPerftCommand = (int d) => $"go perft {d}";
 
         while (true)
         {
@@ -161,9 +164,8 @@ internal class Program
         {
             // Start engine
             powershellProcess.Start();
-
+            powershellProcess.StandardInput.WriteLine("ucinewgame");
             powershellProcess.StandardInput.WriteLine(position);
-
             powershellProcess.StandardInput.WriteLine(perft);
 
             string? output;
